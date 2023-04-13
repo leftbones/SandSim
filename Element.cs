@@ -5,32 +5,57 @@ namespace SharpSand;
 
 enum ElementType { Solid, Liquid, Gas, Powder }
 
-public static class Direction {
-    public static readonly Vector2 Up = new Vector2(0, -1);
-    public static readonly Vector2 Down = new Vector2(0, 1);
-    public static readonly Vector2 Left = new Vector2(-1, 0);
-    public static readonly Vector2 Right = new Vector2(1, 0);
-    public static readonly Vector2 UpLeft = new Vector2(-1, -1);
-    public static readonly Vector2 UpRight = new Vector2(-1, 1);
-    public static readonly Vector2 DownLeft = new Vector2(-1, 1);
-    public static readonly Vector2 DownRight = new Vector2(1, 1);
-
-    public static readonly Vector2[] Horizontal = new Vector2[] { Direction.Left, Direction.Right };
-}
-
 abstract class Element {
     public ElementType Type { get; set; }
     public Vector2 Position { get; set; }
+    public Vector2 LastPosition { get; set; }
     public bool Settled { get; set; } = false;
+    public bool Asleep { get; set; } = false;
+    public int TicksLived { get; set; } = 0;
+    public int Lifetime { get; set; } = -1;
     public int Friction { get; set; } = 0;
+    public int DispersionRate { get; set; } = 1;
+    public float Temperature { get; set; } = 0.0f;
+    public bool CanBeHeated { get; set; } = true;
+    public bool CanBeCooled { get; set; } = true;
+    public float HeatLimit { get; set; } = 0.0f;
+    public float CoolLimit { get; set; } = 0.0f;
+    public float HeatingFactor { get; set; } = 0;
+    public float CoolingFactor { get; set; } = 0;
     public int ColorOffset { get; set; } = 25;
     public Color Color { get; set; } = Color.WHITE;
 
     public Element(Vector2 position) {
         Position = position;
+        LastPosition = position;
     }
 
     public abstract void Update(Matrix matrix);
+
+    public void Tick(Matrix matrix) {
+        TicksLived++;
+        if (TicksLived == Lifetime)
+            LifetimeExpire(matrix);
+    }
+
+    public virtual void HeatReaction(Matrix matrix) { }
+    public virtual void CoolReaction(Matrix matrix) { }
+
+    public virtual void ActOnOther(Matrix matrix, Element other) { }
+
+    public virtual void ApplyHeating(Matrix matrix, float amount) {
+        Temperature += amount;
+        if (Temperature >= HeatLimit)
+            HeatReaction(matrix);
+    }
+
+    public virtual void ApplyCooling(Matrix matrix, float amount) {
+        Temperature -= amount;
+        if (Temperature <= CoolLimit)
+            CoolReaction(matrix);
+    }
+
+    public virtual void LifetimeExpire(Matrix matrix) { }
 
     // Set and offset color
     public void SetColor(Color color) {

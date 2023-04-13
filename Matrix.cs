@@ -28,28 +28,24 @@ class Matrix {
             for (int y = (int)Size.Y - 1; y >= 0; y--) {
                 for (int x = 0; x < (int)Size.X; x++) {
                     Element e = Get(new Vector2(x, y));
-                    if (e is not Air)
+                    if (e is not Air) {
                         e.Update(this);
+                        e.Tick(this);
+                    }
                 }
             }
         } else {
             for (int y = (int)Size.Y - 1; y >= 0; y--) {
                 for (int x = (int)Size.X - 1; x >= 0; x--) {
                     Element e = Get(new Vector2(x, y));
-                    if (e is not Air)
+                    if (e is not Air) {
                         e.Update(this);
+                        e.Tick(this);
+                    }
                 }
             }
         }
         Tick++;
-    }
-
-    // Set an element in the matrix (and update the element's position)
-    public void Set(Vector2 position, Element element) {
-        if (InBounds(position)) {
-            Elements[(int)position.X, (int)position.Y] = element;
-            element.Position = position;
-        }
     }
 
     // Get an element from the matrix
@@ -57,32 +53,110 @@ class Matrix {
         return Elements[(int)position.X, (int)position.Y];
     }
 
+    // Set an element in the matrix (and update the element's position)
+    public bool Set(Vector2 position, Element element) {
+        if (InBounds(position)) {
+            Elements[(int)position.X, (int)position.Y] = element;
+            element.LastPosition = element.Position;
+            element.Position = position;
+            return true;
+        }
+        return false;
+    }
+
     // Swap the position of two elements in the matrix
     public bool Swap(Vector2 pos1, Vector2 pos2) {
-        if (IsValid(pos2)) {
+        if (InBounds(pos2)) {
             Element e1 = Get(pos1);
             Element e2 = Get(pos2);
             Set(pos2, e1);
             Set(pos1, e2);
             return true;
         }
+
+        // Elements attempting to leave the matrix are destroyed
+        if (!InBounds(pos2)) {
+            Set(pos1, new Air(pos1));
+            return true;
+        }
+
+        return false;
+    }
+
+    // Swap the position of two elements in the matrix if the second is empty
+    public bool SwapIfEmpty(Vector2 pos1, Vector2 pos2) {
+        if (!InBounds(pos2))
+            return false;
+        if (IsEmpty(pos2))
+            return Swap(pos1, pos2);
         return false;
     }
 
     // Check if a position is valid (in bounds and empty)
-    public bool IsValid(Vector2 position) {
-        if (InBounds(position))
-            return IsEmpty(position);
-        return false;
-    }
+    // public bool IsValid(Vector2 position) {
+    //     if (InBounds(position))
+    //         return IsEmpty(position);
+    //     return false;
+    // }
 
     // Check if a position is in bounds
     public bool InBounds(Vector2 position) {
         return (int)position.X >= 0 && (int)position.X < (int)Size.X && (int)position.Y >= 0 && (int)position.Y < (int)Size.Y;
     }
 
-    // Check if a position is empty (contains air)
+    // Check if a position is empty (contains air) and in bounds
     public bool IsEmpty(Vector2 position) {
-        return Get(position) is Air;
+        if (InBounds(position))
+            return Get(position) is Air;
+        return false;
+    }
+
+    // Check if a position contains a solid
+    public bool IsSolid(Vector2 position) {
+        if (InBounds(position))
+            return Get(position).Type == ElementType.Solid;
+        return false;
+    }
+
+    // Check if a position contains a solid
+    public bool IsLiquid(Vector2 position) {
+        if (InBounds(position))
+            return Get(position).Type == ElementType.Liquid;
+        return false;
+    }
+
+    // Check if a position contains a solid
+    public bool IsGas(Vector2 position) {
+        if (InBounds(position))
+            return Get(position).Type == ElementType.Gas;
+        return false;
+    }
+
+    // Check if a position contains a solid
+    public bool IsPowder(Vector2 position) {
+        if (InBounds(position))
+            return Get(position).Type == ElementType.Powder;
+        return false;
+    }
+
+    // Check if an element is surrounded (has no valid moves)
+    public bool Surrounded(Vector2 position) {
+        foreach (Vector2 Dir in Direction.Full) {
+            if (IsEmpty(position + Dir))
+                return false;
+        }
+        return true;
+    }
+
+    // Return a list of the elements surrounding a position
+    public List<Element> GetNeighbors(Vector2 position) {
+        List<Element> Neighbors = new List<Element>();
+        foreach (Vector2 Dir in Direction.Full) {
+            if (InBounds(position + Dir)) {
+                if (!IsEmpty(position + Dir))
+                    Neighbors.Add(Get(position + Dir));
+            }
+        }
+        return Neighbors;
     }
 }

@@ -10,27 +10,27 @@ class Snow : Powder {
     }
 
     public override void Update(Matrix matrix) {
-        if (Settled)
-            if (matrix.IsValid(Position + Direction.Down))
+        if (Settled) {
+            if (matrix.IsEmpty(Position + Direction.Down))
                 Settled = false;
             else
                 return;
+        }
 
         int DriftChance = 10;
-        if (!matrix.IsValid(Position + Direction.Down))
+        if (!matrix.IsEmpty(Position + Direction.Down))
             DriftChance = 90;
 
-        // Left, Right, DownLeft, DownRight (Shuffled)
-        List<Vector2> Directions = new List<Vector2>{Direction.Left, Direction.Right, Direction.DownLeft, Direction.DownRight};
-        Directions = Directions.OrderBy(a => RNG.Random.Next()).ToList();
+        // Left, Right, DownLeft, DownRight, Down (Shuffled)
+        List<Vector2> Directions = Direction.LowerHalf.OrderBy(a => RNG.Random.Next()).ToList();
 
         foreach (Vector2 D in Directions) {
-            if (RNG.Chance(DriftChance) && matrix.Swap(Position, Position + D))
+            if (RNG.Chance(DriftChance) && matrix.SwapIfEmpty(Position, Position + D))
                 return;
         }
 
         // Down
-        if (RNG.CoinFlip() && matrix.Swap(Position, Position + Direction.Down))
+        if (RNG.CoinFlip() && matrix.SwapIfEmpty(Position, Position + Direction.Down))
             return;
 
         // Sliding
@@ -43,10 +43,15 @@ class Snow : Powder {
         if (RNG.CoinFlip())
             Dir = -1;
 
-        if (matrix.Swap(Position, Position + new Vector2(Dir, 0)))
+        if (matrix.SwapIfEmpty(Position, Position + new Vector2(Dir, 0)))
             return;
 
         // No movement
-        Settled = true;
+        if (Position == LastPosition)
+            Settled = true;
+    }
+
+    public override void HeatReaction(Matrix matrix) {
+        matrix.Set(Position, new Water(Position));
     }
 }

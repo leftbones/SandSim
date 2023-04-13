@@ -14,21 +14,22 @@ abstract class Powder : Element {
     }
 
     public override void Update(Matrix matrix) {
-        if (Settled)
-            if (matrix.IsValid(Position + Direction.Down))
+        if (Settled) {
+            if (matrix.IsEmpty(Position + Direction.Down))
                 Settled = false;
             else
                 return;
+        }
         
         // Down
-        if (matrix.Swap(Position, Position + Direction.Down))
+        if (matrix.SwapIfEmpty(Position, Position + Direction.Down))
             return;
 
         // Down Left + Down Right
-        if (matrix.Swap(Position, Position + Direction.DownLeft))
+        if (matrix.SwapIfEmpty(Position, Position + Direction.DownLeft))
             return;
 
-        if (matrix.Swap(Position, Position + Direction.DownRight))
+        if (matrix.SwapIfEmpty(Position, Position + Direction.DownRight))
             return;
 
         // Sliding
@@ -41,9 +42,10 @@ abstract class Powder : Element {
         if (RNG.CoinFlip())
             Dir = -Dir;
 
-        if (matrix.Swap(Position, Position + new Vector2(Dir, 0)))
+        if (matrix.SwapIfEmpty(Position, Position + new Vector2(Dir, 0)))
             return;
 
-        Settled = true;
+        if (Position == LastPosition)
+            Settled = true;
     }
 }

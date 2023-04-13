@@ -1,7 +1,7 @@
 namespace SharpSand;
 
 static class RNG {
-    public static Random Random = new Random();
+    public static Random Random = new Random(Guid.NewGuid().GetHashCode());
 
     // Return true or false based on a percent chance out of 100
     public static bool Chance(int chance) {

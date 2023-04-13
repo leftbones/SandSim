@@ -1,33 +1,39 @@
 using System.Numerics;
+using System.Linq;
 using Raylib_cs;
 
 namespace SharpSand;
 
 class Water : Liquid {
     public Water(Vector2 position) : base(position) {
-        Color = new Color(1, 151, 244, 255);
+        DispersionRate = 5;
+        HeatLimit = 100.0f;
+        CoolLimit = -100.0f;
+        ColorOffset = 0;
+        SetColor(new Color(1, 151, 244, 255));
     }
 
-    public override void Update(Matrix matrix) { 
-        if (Settled)
-            if (
-                matrix.IsValid(Position + Direction.Down) || 
-                matrix.IsValid(Position + Direction.Left) || 
-                matrix.IsValid(Position + Direction.Right)
-            )
-                Settled = false;
-            else
-                return;
+    public override void Update(Matrix matrix) {
+        foreach (Vector2 Dir in Direction.Cardinal) {
+            if (matrix.InBounds(Position + Dir)) {
+                Element e = matrix.Get(Position + Dir);
+                ActOnOther(matrix, e);
+            }
+        }
 
-        if (matrix.Swap(Position, Position + Direction.Down))
-            return;
+        base.Update(matrix);
+    }
 
-        if (RNG.Chance(99) && matrix.Swap(Position, Position + Direction.Left))
-            return;
+    public override void ActOnOther(Matrix matrix, Element other) {
+        other.Settled = false;
+        Settled = false;
+    }
 
-        if (RNG.Chance(99) && matrix.Swap(Position, Position + Direction.Right))
-            return;
+    public override void HeatReaction(Matrix matrix) {
+        matrix.Set(Position, new Steam(Position));
+    }
 
-        Settled = true;
+    public override void CoolReaction(Matrix matrix) {
+        matrix.Set(Position, new Ice(Position));
     }
 }
