@@ -5,10 +5,9 @@ namespace SharpSand;
 
 class Ice : Solid {
     public Ice(Vector2 position) : base(position) {
-        CanBeCooled = false;
-        CoolingFactor = 0.5f;
         ColorOffset = 15;
-        SetColor(new Color(165, 242, 243, 255));
+        BaseColor = new Color(165, 242, 243, 255);
+        ModifyColor();
     }
 
     public override void Update(Matrix matrix) {
@@ -21,12 +20,17 @@ class Ice : Solid {
         }
     }
 
-    public override void ActOnOther(Matrix matrix, Element other) {
-        if (other is not Air && other.CanBeCooled)
-            other.ApplyCooling(matrix, CoolingFactor);
+    public override bool ActOnOther(Matrix matrix, Element other) {
+        if (other is not Air) {
+            other.ApplyCooling(matrix);
+            other.Settled = false;
+            Settled = false;
+            return true;
+        }
+        return false;
     }
 
-    public override void HeatReaction(Matrix matrix) {
+    public override void ApplyHeating(Matrix matrix) {
         matrix.Set(Position, new Water(Position));
     }
 }

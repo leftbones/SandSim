@@ -6,13 +6,13 @@ namespace SharpSand;
 
 class Steam : Gas {
     public Steam(Vector2 position) : base(position) {
-        Lifetime = 1000;
-        CanBeHeated = false;
-        CanBeCooled = false;
-        SetColor(new Color(232, 239, 239, 150));
+        Lifetime = 750;
+        DispersionRate = 10;
+        BaseColor = new Color(232, 239, 239, 150);
+        ModifyColor();
     }
 
-    public override void LifetimeExpire(Matrix matrix) {
+    public override void Expire(Matrix matrix) {
         matrix.Set(Position, new Air(Position));
     }
 }

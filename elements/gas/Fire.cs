@@ -8,11 +8,9 @@ namespace SharpSand;
 
 class Fire : Gas {
     public Fire(Vector2 position) : base(position) {
-        Lifetime = 50;
-        CanBeHeated = false;
-        HeatingFactor = 50.0f;
-        ColorOffset = 100;
-        SetColor(new Color(255, 117, 56, 255));
+        Lifetime = 30;
+        BaseColor = Effect.GetFireColor();
+        Color = BaseColor;
     }
 
     public override void Update(Matrix matrix) {
@@ -22,7 +20,7 @@ class Fire : Gas {
 
         // Heat neighbors
         foreach (Vector2 Dir in Direction.Full) {
-            if (RNG.Chance(20) && matrix.InBounds(Position + Dir)) {
+            if (RNG.Chance(33) && matrix.InBounds(Position + Dir)) {
                 Element e = matrix.Get(Position + Dir);
                 ActOnOther(matrix, e);
             }
@@ -31,16 +29,16 @@ class Fire : Gas {
         // Move upward, higher chance to move directly up
         List<Vector2> Directions = Direction.Upward.OrderBy(a => RNG.Random.Next()).ToList();
         foreach (Vector2 Dir in Directions) {
-            int Chance = 5;
+            int Chance = 1;
             if (Dir == Direction.Up)
-                Chance = 25;
+                Chance = 20;
 
             if (RNG.Chance(Chance) && matrix.SwapIfEmpty(Position, Position + Dir))
                 return;
         }
 
-        // 25% chance to try to move up
-        if (RNG.Chance(25) && matrix.SwapIfEmpty(Position, Position + Direction.Up))
+        // 50% chance to try to move up
+        if (RNG.CoinFlip() && matrix.SwapIfEmpty(Position, Position + Direction.Up))
             return;
 
         // Move either left or right if it can't move up
@@ -59,16 +57,29 @@ class Fire : Gas {
         }
     }
 
-    public override void ActOnOther(Matrix matrix, Element other) {
-        if (other is not Air && other.CanBeHeated) {
-            other.ApplyHeating(matrix, HeatingFactor);
+    public override bool ActOnOther(Matrix matrix, Element other) {
+        if (other is not Air && RNG.Chance(other.GetIgniteChance())) {
+            other.ApplyHeating(matrix);
+
+            if (other is Water)
+                Expire(matrix);
+
             other.Settled = false;
             Settled = false;
-            LifetimeExpire(matrix);
+            return true;
         }
+        return false;
     }
 
-    public override void LifetimeExpire(Matrix matrix) {
+    public override void Expire(Matrix matrix) {
+        // Last ditch effor to spread to nearby flammable elements before burning out
+        foreach (Vector2 Dir in Direction.Full) {
+            if (matrix.InBounds(Position + Dir)) {
+                Element e = matrix.Get(Position + Dir);
+                if (e is not Air && RNG.Chance(Math.Min(e.GetIgniteChance(), 0)))
+                    e.ApplyHeating(matrix);
+            }
+        }
         matrix.Set(Position, new Air(Position));
     }
 }

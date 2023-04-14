@@ -6,7 +6,8 @@ namespace SharpSand;
 class Snow : Powder {
     public Snow(Vector2 position) : base(position) {
         Friction = 25;
-        SetColor(new Color(255, 255, 255, 255));
+        BaseColor = new Color(255, 255, 255, 255);
+        ModifyColor();
     }
 
     public override void Update(Matrix matrix) {
@@ -49,9 +50,5 @@ class Snow : Powder {
         // No movement
         if (Position == LastPosition)
             Settled = true;
-    }
-
-    public override void HeatReaction(Matrix matrix) {
-        matrix.Set(Position, new Water(Position));
     }
 }

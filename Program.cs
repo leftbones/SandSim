@@ -23,13 +23,10 @@ class Program {
         Image BufferImage = GenImageColor((int)MatrixSize.X, (int)MatrixSize.Y, Color.BLACK);
         Texture2D BufferTexture = LoadTextureFromImage(BufferImage);
 
-        // Brush
-        int BrushSize = 5;
-        int BrushDensity = 5;
-        string BrushElement = "Fire";
+        var DrawingTools = new DrawingTools(ScreenSize, MatrixSize);
 
         // Spout
-        bool SpoutEnabled = true;
+        bool SpoutEnabled = false;
         int SpoutSize = 5;
         int SpoutDensity = 10;
         string SpoutElement = "Water";
@@ -37,7 +34,7 @@ class Program {
         // Weather
         bool WeatherEnabled = false;
         int WeatherStrength = 1;
-        string WeatherElement = "Water";
+        string WeatherElement = "Snow";
 
         // Plant Base
         for (int x = 0; x < (int)MatrixSize.X - 1; x++) {
@@ -49,28 +46,10 @@ class Program {
             Matrix.Set(Pos3, new Plant(Pos3));
         }
 
-        // Concrete Platform
-        for (int x = (int)(MatrixSize.X / 2.0f) - 60; x < (int)(MatrixSize.X / 2.0f) + 60; x++) {
-            for (int y = (int)(MatrixSize.Y / 2.0f) - 3; y < (int)(MatrixSize.Y / 2.0f) + 3; y++) {
-                Vector2 Pos = new Vector2(x, y);
-                Matrix.Set(Pos, new Concrete(Pos));
-            }
-        }
-
-        // Concrete Walls
-        for (int x = (int)(MatrixSize.X / 2.0f) - 60; x < (int)(MatrixSize.X / 2.0f) - 54; x++) {
-            for (int y = (int)(MatrixSize.Y / 2.0f) - 30; y < (int)(MatrixSize.Y / 2.0f); y++) {
-                Vector2 Pos = new Vector2(x, y);
-                Matrix.Set(Pos, new Concrete(Pos));
-            }
-        }
-
-        for (int x = (int)(MatrixSize.X / 2.0f) + 54; x < (int)(MatrixSize.X / 2.0f) + 60; x++) {
-            for (int y = (int)(MatrixSize.Y / 2.0f) - 30; y < (int)(MatrixSize.Y / 2.0f); y++) {
-                Vector2 Pos = new Vector2(x, y);
-                Matrix.Set(Pos, new Concrete(Pos));
-            }
-        }
+        // Platforms
+        DrawingTools.DrawBox(Matrix, new Vector2(((int)MatrixSize.X / 2.0f) - 60, 60), new Vector2(120, 5), "Concrete");
+        DrawingTools.DrawBox(Matrix, new Vector2(((int)MatrixSize.X / 2.0f) - 90, 120), new Vector2(60, 5), "Concrete");
+        DrawingTools.DrawBox(Matrix, new Vector2(((int)MatrixSize.X / 2.0f) + 30, 120), new Vector2(60, 5), "Concrete");
 
         Console.WriteLine("[SYSTEM] Init complete");
 
@@ -78,16 +57,16 @@ class Program {
         while (!WindowShouldClose()) {
             // Update
             Matrix.Update();
+            DrawingTools.Update();
 
             // Brush
             if (IsMouseButtonDown(MouseButton.MOUSE_LEFT_BUTTON)) {
-                for (int i = 0; i < BrushDensity; i++) {
-                    Vector2 MousePos = GetMousePosition() / 2.0f;
-                    Vector2 Position = MousePos + new Vector2(RNG.Range(-BrushSize, BrushSize), RNG.Range(-BrushSize, BrushSize));
+                DrawingTools.Paint(Matrix);
+            }
 
-                    Type t = Type.GetType("SharpSand." + BrushElement)!;
-                    Matrix.Set(Position, (Element)Activator.CreateInstance(t, Position)!);
-                }
+            // Eraser
+            if (IsMouseButtonDown(MouseButton.MOUSE_RIGHT_BUTTON)) {
+                DrawingTools.Erase(Matrix);
             }
 
             // Spout
@@ -113,7 +92,7 @@ class Program {
             }
 
             // Texture
-            ImageClearBackground(ref BufferImage, Color.BLACK);
+            ImageClearBackground(ref BufferImage, DrawingTools.Theme.BackgroundColor);
 
             foreach (Element e in Matrix.Elements) {
                 if (e is not Air) {
@@ -127,11 +106,13 @@ class Program {
 
             // Draw
             BeginDrawing();
-            ClearBackground(Color.BLACK);
+            ClearBackground(DrawingTools.Theme.BackgroundColor);
 
             DrawTexturePro(BufferTexture, new Rectangle(0, 0, MatrixSize.X, MatrixSize.Y), new Rectangle(0, 0, ScreenSize.X, ScreenSize.Y), Vector2.Zero, 0, Color.WHITE);
 
-            DrawFPS(10, 10);
+            DrawingTools.DrawBrushIndicator();
+            DrawingTools.DrawBrushElement();
+            DrawingTools.DrawFPS();
 
             EndDrawing();
         }

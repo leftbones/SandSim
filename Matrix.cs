@@ -8,6 +8,7 @@ class Matrix {
     public Element[,] Elements { get; private set; }
 
     public int Tick { get; private set; }
+    public bool DestroyOutOfBounds { get; set; } = true;
 
     public Matrix(Vector2 size) {
         Size = size;
@@ -73,31 +74,23 @@ class Matrix {
             Set(pos1, e2);
             return true;
         }
-
-        // Elements attempting to leave the matrix are destroyed
-        if (!InBounds(pos2)) {
-            Set(pos1, new Air(pos1));
-            return true;
-        }
-
         return false;
     }
 
     // Swap the position of two elements in the matrix if the second is empty
     public bool SwapIfEmpty(Vector2 pos1, Vector2 pos2) {
-        if (!InBounds(pos2))
+        if (!InBounds(pos2)) {
+            if (DestroyOutOfBounds) {
+                Set(pos1, new Air(pos1));
+                return true;
+            }
             return false;
+        }
+
         if (IsEmpty(pos2))
             return Swap(pos1, pos2);
         return false;
     }
-
-    // Check if a position is valid (in bounds and empty)
-    // public bool IsValid(Vector2 position) {
-    //     if (InBounds(position))
-    //         return IsEmpty(position);
-    //     return false;
-    // }
 
     // Check if a position is in bounds
     public bool InBounds(Vector2 position) {
