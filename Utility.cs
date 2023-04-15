@@ -6,6 +6,14 @@ namespace SharpSand;
 
 
 public static unsafe class Utility {
+    // Snap coordinates to the nearest integer grid location
+    public static Vector2 GridSnap(Vector2 position, int grid_size) {
+        return new Vector2(
+            (float)Math.Round(position.X / grid_size) * grid_size,
+            (float)Math.Round(position.Y / grid_size) * grid_size
+        );
+    }
+
     // Return a color offset by a specified amount
     public static Color OffsetColor(Color color, int offset) {
         int Offset = RNG.Range(-offset, offset);

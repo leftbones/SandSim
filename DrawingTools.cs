@@ -19,7 +19,7 @@ class DrawingTools {
     public int BrushDensity { get { return Math.Max(BrushSize / Scale, 1); } }
     public string BrushElement { get { return "SharpSand." + ElementNames[ElementIndex]; } }
 
-    public Vector2 BrushPos { get { return new Vector2((int)GetMouseX() / Scale, (int)GetMouseY() / Scale); } }
+    public Vector2 BrushPos { get { return Utility.GridSnap(new Vector2((int)GetMouseX() / Scale, (int)GetMouseY() / Scale), 1); } }
 
     public int MinBrushSize { get; } = 1;
     public int MaxBrushSize { get { return 200 / Scale; } }
@@ -103,7 +103,7 @@ class DrawingTools {
         }
     }
 
-    public void DrawBrushIndicator() { // TODO: Snap the indicator to the nearest grid positions
+    public void DrawBrushIndicator() {
         DrawRectangleLines((((int)BrushPos.X * Scale) - (BrushSize / 2) * Scale) + 1, (((int)BrushPos.Y * Scale) - (BrushSize / Scale) * Scale) + 1, BrushSize * Scale, BrushSize * Scale, Theme.ShadowColor);
         DrawRectangleLines((((int)BrushPos.X * Scale) - (BrushSize / 2) * Scale), (((int)BrushPos.Y * Scale) - (BrushSize / Scale) * Scale), BrushSize * Scale, BrushSize * Scale, Theme.ForegroundColor);
     }
