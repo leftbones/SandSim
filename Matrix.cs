@@ -252,4 +252,21 @@ class Matrix {
         }
         return Neighbors;
     }
+
+    // Reset the entire matrix to air
+    public void Reset() {
+        Elements = new Element[(int)Size.X, (int)Size.Y];
+        for (int x = 0; x < Size.X; x++) {
+            for (int y = 0; y < Size.Y; y++) {
+                Elements[x, y] = new Air(new Vector2(x, y));
+            }
+        }
+    }
+
+    // Unsettle every element in the matrix
+    public void UnsettleAll() {
+        foreach (Element e in Elements) {
+            e.Settled = false;
+        }
+    }
 }

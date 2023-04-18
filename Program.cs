@@ -24,6 +24,29 @@ class Program {
 
         var DrawingTools = new DrawingTools(ScreenSize, MatrixSize);
 
+        // Function Keys
+        bool ShowHelpText = false;
+        bool ShowElementName = false;
+        bool LimitFPS = true;
+
+        List<string> HelpText = new List<string>() {
+            "Controls:",
+            "<Mouse 1> Paint",
+            "<Mouse 2> Erase",
+            "<Scroll> Change brush size",
+            "<LShift> Faster scrolling",
+            "<W> Next element",
+            "<S> Previous element",
+            "<O> Toggle 'Paint Over'",
+            "",
+            "Hotkeys:",
+            "<F2> Toggle FPS cap",
+            "<F3> Toggle water spout",
+            "<F4> Toggle world borders",
+            "<F5> Reset world"
+        };
+
+
         // Spout
         bool SpoutEnabled = true;
         int SpoutSize = 2;
@@ -44,6 +67,27 @@ class Program {
 
         // Main Loop
         while (!WindowShouldClose()) {
+            // Hotkeys
+            if (IsKeyDown(KeyboardKey.KEY_F1)) ShowHelpText = true;
+            else ShowHelpText = false;
+
+            if (IsKeyPressed(KeyboardKey.KEY_F2)) {
+                if (LimitFPS) SetTargetFPS(1000);
+                else SetTargetFPS(200);
+                LimitFPS = !LimitFPS;
+            }
+
+            if (IsKeyPressed(KeyboardKey.KEY_F3))
+                SpoutEnabled = !SpoutEnabled;
+
+            if (IsKeyPressed(KeyboardKey.KEY_F4)) {
+                Matrix.DestroyOutOfBounds = !Matrix.DestroyOutOfBounds;
+                Matrix.UnsettleAll();
+            }
+
+            if (IsKeyPressed(KeyboardKey.KEY_F5))
+                Matrix.Reset();
+
             // Update
             Matrix.Update();
             DrawingTools.Update();
@@ -103,14 +147,25 @@ class Program {
             DrawingTools.DrawHUD();
             DrawingTools.DrawBrushIndicator();
 
+            // Show help text
+            if (ShowHelpText) {
+                for (int i = 0; i < HelpText.Count; i++) { 
+                    DrawingTools.DrawTextShadow(HelpText[i], new Vector2(5, 80 + (25 * i)));
+                }
+            } else {
+                DrawingTools.DrawTextShadow("<F1> Help", new Vector2(5, 80));
+            }
+
             // Draw name of element under cursor
-            Vector2 MousePos = DrawingTools.GetMousePos();
-            if (Matrix.InBounds(MousePos)) {
-                Element e = Matrix.Get(MousePos);
-                string ElementName = e.ToString()!.Split(".")[1];
-                if (e.OnFire)
-                    ElementName += " (on fire)";
-                DrawingTools.DrawTextShadow(ElementName, (MousePos * DrawingTools.Scale) + new Vector2(5, 5));
+            if (ShowElementName) {
+                Vector2 MousePos = DrawingTools.GetMousePos();
+                if (Matrix.InBounds(MousePos)) {
+                    Element e = Matrix.Get(MousePos);
+                    string ElementName = e.ToString()!.Split(".")[1];
+                    if (e.OnFire)
+                        ElementName += " (on fire)";
+                    DrawingTools.DrawTextShadow(ElementName, (MousePos * DrawingTools.Scale) + new Vector2(5, 5));
+                }
             }
 
             EndDrawing();
