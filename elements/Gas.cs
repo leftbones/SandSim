@@ -3,48 +3,42 @@ using Raylib_cs;
 
 namespace SharpSand;
 
+
 abstract class Gas : Element {
     public Gas(Vector2 position) : base(position) {
         Type = ElementType.Gas;
-        DispersionRate = 5;
+        Spread = 3.0f;
     }
 
-    public override void Update(Matrix matrix) {
-        List<Element> Neighbors = matrix.GetNeighbors(Position);
-        if (Neighbors.OfType<Air>().Any())
-            Settled = false;
+    public override void Step(Matrix matrix) {
+        // Move upward if the space above contains liquid (regardless of density)
+        if (matrix.SwapIfType(Position, Position + Direction.Up, ElementType.Liquid))
+            return;
 
-        // Spread outward if up is not an option
-        if (matrix.IsEmpty(Position + Direction.Up)) {
-            if (matrix.Tick % 2 == 0) {
-                for (int i = 0; i < DispersionRate; i++) {
-                    if (RNG.CoinFlip() && !matrix.SwapIfEmpty(Position, Position + Direction.Left)) {
-                        Settled = true;
-                        return;
-                    }
-                }
-            } else {
-                for (int i = 0; i < DispersionRate; i++) {
-                    if (RNG.CoinFlip() && !matrix.SwapIfEmpty(Position, Position + Direction.Right)) {
-                        Settled = true;
-                        return;
-                    }
-                }
-            }
-        }
+        // Move upward if the space above contains a denser gas
+        // if (matrix.SwapIfMoreDense(Position, Position + Direction.Up))
+        //     return;
 
-        // Disperse in any direction, higher chance to go upward
-        List<Vector2> Directions = Direction.Full.OrderBy(a => RNG.Random.Next()).ToList();
-        foreach (Vector2 Dir in Directions) {
-            int Chance = 10;
-            if (Direction.UpperHalf.Contains(Dir))
-                Chance = 50;
+        // Chance to not move at all
+        if (RNG.Chance(25))
+            return;
 
-            if (RNG.Chance(Chance) && matrix.SwapIfEmpty(Position, Position + Dir))
+        // Attempt to move up/down based on density relative to air
+        List<Vector2> Directions = Density < 0 ? Direction.ShuffledUpward : Direction.ShuffledDownward;
+        if (Density == 0.0f) Directions = Direction.ShuffledFull;
+        foreach (Vector2 MoveDir in Directions) {
+            if (RNG.Roll(Math.Abs(Density)) && matrix.SwapIfEmpty(Position, Position + MoveDir))
                 return;
         }
 
-        Settled = true;
+        // Move left/right based on spread rate and the current tick
+        Vector2 Dir = matrix.Tick % 2 == 0 ? Direction.Left : Direction.Right;
+        for (int i = 0; i < (int)Spread; i++) {
+            if (RNG.CoinFlip() && !matrix.SwapIfEmpty(Position, Position + Dir)) {
+                Settled = true;
+                return;
+            }
+        }
     }
 }
 
@@ -56,5 +50,5 @@ class Air : Gas {
         Color = Color.BLACK;
     }
 
-    public override void Update(Matrix matrix) { }
+    public override void Step(Matrix matrix) { }
 }

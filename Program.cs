@@ -5,17 +5,16 @@ using static Raylib_cs.TraceLogLevel;
 
 namespace SharpSand;
 
-
 class Program {
     static unsafe void Main(string[] args) {
         // Init
         Console.WriteLine("[SYSTEM] Simulation initialized");
-        Vector2 ScreenSize = new Vector2(800, 600);
-        Vector2 MatrixSize = new Vector2(400, 300);
+        Vector2 ScreenSize = new Vector2(1280, 720);
+        Vector2 MatrixSize = new Vector2(320, 180);
 
         SetTraceLogLevel(LOG_WARNING | LOG_ERROR | LOG_FATAL);
         InitWindow((int)ScreenSize.X, (int)ScreenSize.Y, "Sand");
-        SetTargetFPS(144);
+        SetTargetFPS(200);
 
         Console.WriteLine("[SYSTEM] Matrix initialized");
         Matrix Matrix = new Matrix(new Vector2((int)MatrixSize.X, (int)MatrixSize.Y));
@@ -26,9 +25,9 @@ class Program {
         var DrawingTools = new DrawingTools(ScreenSize, MatrixSize);
 
         // Spout
-        bool SpoutEnabled = false;
-        int SpoutSize = 5;
-        int SpoutDensity = 10;
+        bool SpoutEnabled = true;
+        int SpoutSize = 2;
+        int SpoutDensity = 2;
         string SpoutElement = "Water";
 
         // Weather
@@ -36,20 +35,10 @@ class Program {
         int WeatherStrength = 1;
         string WeatherElement = "Snow";
 
-        // Plant Base
-        for (int x = 0; x < (int)MatrixSize.X - 1; x++) {
-            Vector2 Pos1 = new Vector2(x, MatrixSize.Y - 1);
-            Vector2 Pos2 = new Vector2(x, MatrixSize.Y - 2);
-            Vector2 Pos3 = new Vector2(x, MatrixSize.Y - 3);
-            Matrix.Set(Pos1, new Plant(Pos1));
-            Matrix.Set(Pos2, new Plant(Pos2));
-            Matrix.Set(Pos3, new Plant(Pos3));
-        }
-
         // Platforms
-        DrawingTools.DrawBox(Matrix, new Vector2(((int)MatrixSize.X / 2.0f) - 60, 60), new Vector2(120, 5), "Concrete");
-        DrawingTools.DrawBox(Matrix, new Vector2(((int)MatrixSize.X / 2.0f) - 90, 120), new Vector2(60, 5), "Concrete");
-        DrawingTools.DrawBox(Matrix, new Vector2(((int)MatrixSize.X / 2.0f) + 30, 120), new Vector2(60, 5), "Concrete");
+        DrawingTools.PaintBox(Matrix, new Vector2(((int)MatrixSize.X / 2.0f) - 60, 60), new Vector2(120, 5), "Concrete");
+        DrawingTools.PaintBox(Matrix, new Vector2(((int)MatrixSize.X / 2.0f) - 90, 120), new Vector2(60, 5), "Concrete");
+        DrawingTools.PaintBox(Matrix, new Vector2(((int)MatrixSize.X / 2.0f) + 30, 120), new Vector2(60, 5), "Concrete");
 
         Console.WriteLine("[SYSTEM] Init complete");
 
@@ -99,6 +88,7 @@ class Program {
                     Color c = e.Color;
                     // if (e.Settled) c = Color.MAGENTA;
                     ImageDrawPixel(ref BufferImage, (int)e.Position.X, (int)e.Position.Y, c);
+                    e.AlreadyStepped = false;
                 }
             }
 
@@ -110,9 +100,18 @@ class Program {
 
             DrawTexturePro(BufferTexture, new Rectangle(0, 0, MatrixSize.X, MatrixSize.Y), new Rectangle(0, 0, ScreenSize.X, ScreenSize.Y), Vector2.Zero, 0, Color.WHITE);
 
+            DrawingTools.DrawHUD();
             DrawingTools.DrawBrushIndicator();
-            DrawingTools.DrawBrushElement();
-            DrawingTools.DrawFPS();
+
+            // Draw name of element under cursor
+            Vector2 MousePos = DrawingTools.GetMousePos();
+            if (Matrix.InBounds(MousePos)) {
+                Element e = Matrix.Get(MousePos);
+                string ElementName = e.ToString()!.Split(".")[1];
+                if (e.OnFire)
+                    ElementName += " (on fire)";
+                DrawingTools.DrawTextShadow(ElementName, (MousePos * DrawingTools.Scale) + new Vector2(5, 5));
+            }
 
             EndDrawing();
         }

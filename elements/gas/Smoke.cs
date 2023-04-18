@@ -7,7 +7,7 @@ namespace SharpSand;
 class Smoke : Gas {
     public Smoke(Vector2 position) : base(position) {
         Lifetime = 750;
-        DispersionRate = 10;
+        Density = -0.3f;
         BaseColor = new Color(132, 136, 132, 150);
         ModifyColor();
     }

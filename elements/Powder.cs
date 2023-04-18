@@ -13,39 +13,50 @@ abstract class Powder : Element {
         Type = ElementType.Powder;
     }
 
-    public override void Update(Matrix matrix) {
+    public override void Step(Matrix matrix) {
+        // Unsettle if space below is empty
         if (Settled) {
             if (matrix.IsEmpty(Position + Direction.Down))
                 Settled = false;
             else
                 return;
         }
-        
-        // Down
-        if (matrix.SwapIfEmpty(Position, Position + Direction.Down))
-            return;
 
-        // Down Left + Down Right
-        if (matrix.SwapIfEmpty(Position, Position + Direction.DownLeft))
+        // Move down if space is empty or contains liquid, chance to become settled if it fails
+        if (matrix.SwapIfTypeOrEmpty(Position, Position + Direction.Down, ElementType.Liquid)) {
             return;
-
-        if (matrix.SwapIfEmpty(Position, Position + Direction.DownRight))
-            return;
-
-        // Sliding
-        if (RNG.Chance(Friction)) {
+        } else if (RNG.Roll(Friction)) {
             Settled = true;
             return;
         }
 
-        int Dir = 1;
-        if (RNG.CoinFlip())
-            Dir = -Dir;
+        // Move down left/right (in last direction or random if last direction is not down left/right) if space is empty or contains liquid or gas
+        Vector2 MoveDir = LastDirection;
+        if (!Direction.DiagonalDown.Contains(LastDirection))
+            MoveDir = Direction.RandomDiagonalDown;
 
-        if (matrix.SwapIfEmpty(Position, Position + new Vector2(Dir, 0)))
+        if (matrix.SwapIfTypeOrEmpty(Position, Position + MoveDir, ElementType.Liquid) ||
+            matrix.SwapIfTypeOrEmpty(Position, Position + MoveDir, ElementType.Gas))
             return;
 
-        if (Position == LastPosition)
+        if (matrix.SwapIfTypeOrEmpty(Position, Position + Direction.MirrorHorizontal(MoveDir), ElementType.Liquid) ||
+            matrix.SwapIfTypeOrEmpty(Position, Position + MoveDir, ElementType.Gas))
+            return;
+
+        // Chance to become settled based on friction value
+        if (RNG.Roll(Friction)) {
             Settled = true;
+            return;
+        }
+
+        // Move left/right (in last direction) if space is empty, become settled if it fails
+        MoveDir = LastDirection;
+        if (!Direction.Horizontal.Contains(LastDirection))
+            MoveDir = Direction.RandomHorizontal;
+
+        if (matrix.SwapIfEmpty(Position, Position + MoveDir)) {
+            Settled = true;
+            return;
+        }
     }
 }

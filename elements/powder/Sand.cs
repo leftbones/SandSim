@@ -5,7 +5,7 @@ namespace SharpSand;
 
 class Sand : Powder {
     public Sand(Vector2 position) : base(position) {
-        Friction = 2;
+        Friction = 0.1f;
         BaseColor = new Color(255, 206, 92, 255);
         ModifyColor();
     }

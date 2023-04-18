@@ -8,57 +8,39 @@ abstract class Liquid : Element {
         Type = ElementType.Liquid;
     }
 
-    public override void Update(Matrix matrix) {
+    public override void Step(Matrix matrix) {
+        // Unsettle if down/left/right space is empty
         if (Settled) {
-            if (matrix.IsEmpty(Position + Direction.Down) || matrix.IsEmpty(Position + Direction.Left) || matrix.IsEmpty(Position + Direction.Right))
+            if (matrix.IsTypeOrEmpty(Position + Direction.Down, ElementType.Gas) || matrix.IsTypeOrEmpty(Position + Direction.Left, ElementType.Gas) || matrix.IsTypeOrEmpty(Position + Direction.Right, ElementType.Gas))
                 Settled = false;
             else
                 return;
         }
 
-        // Small chance to move down + left/right
+        // Chance to move down + left/right when falling
         if (RNG.Chance(5)) {
-            if (RNG.CoinFlip()) {
-                if (matrix.SwapIfEmpty(Position, Position + Direction.DownLeft))
-                    return;
+            List<Vector2> DLDR = Direction.ShuffledDiagonalDown;
+            if (matrix.SwapIfTypeOrEmpty(Position, Position + DLDR[0], ElementType.Gas))
+                return;
 
-                if (matrix.SwapIfEmpty(Position, Position + Direction.DownRight))
-                    return;
-            } else {
-                if (matrix.SwapIfEmpty(Position, Position + Direction.DownRight))
-                    return;
-
-                if (matrix.SwapIfEmpty(Position, Position + Direction.DownLeft))
-                    return;
-            }
+            if (matrix.SwapIfTypeOrEmpty(Position, Position + DLDR[1], ElementType.Gas))
+                return;
         }
 
-        // Move down (through gasses if necessary)
-        if (matrix.SwapIfEmpty(Position, Position + Direction.Down))
+        // Move down if space is empty or contains gas
+        if (matrix.SwapIfTypeOrEmpty(Position, Position + Direction.Down, ElementType.Gas))
             return;
 
-        if (matrix.IsGas(Position + Direction.Down) && matrix.Swap(Position, Position + Direction.Down))
-            return;
+        // Move left/right based on the current tick
+        Vector2 MoveDir = matrix.Tick % 2 == 0 ? Direction.Left : Direction.Right;
+        for (int i = 0; i < (int)Spread; i++) {
+            if (RNG.CoinFlip() && !matrix.SwapIfTypeOrEmpty(Position, Position + MoveDir, ElementType.Gas)) {
+                Settled = true;
+                return;
+            }
 
-        // Move left/right
-        if (matrix.Tick % 2 == 0) {
-            for (int i = 0; i < DispersionRate; i++) {
-                if (RNG.CoinFlip() && !matrix.SwapIfEmpty(Position, Position + Direction.Left)) {
-                    Settled = true;
-                    return;
-                }
-            }
-        } else {
-            for (int i = 0; i < DispersionRate; i++) {
-                if (RNG.CoinFlip() && !matrix.SwapIfEmpty(Position, Position + Direction.Right)) {
-                    Settled = true;
-                    return;
-                }
-            }
+            else if (RNG.Chance(50 + (i * 2)) && matrix.IsTypeOrEmpty(Position + Direction.Down, ElementType.Gas))
+                return;
         }
-
-        // No movement
-        if (Position == LastPosition)
-            Settled = true;
     }
 }

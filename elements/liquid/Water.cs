@@ -1,33 +1,35 @@
 using System.Numerics;
-using System.Linq;
 using Raylib_cs;
 
 namespace SharpSand;
 
 class Water : Liquid {
     public Water(Vector2 position) : base(position) {
-        DispersionRate = 5;
+        Spread = 10.0f;
+        CoolPotential = 0.05f;
         ColorOffset = 0;
         BaseColor = new Color(1, 151, 244, 255);
         ModifyColor();
     }
 
-    public override void Update(Matrix matrix) {
-        // foreach (Vector2 Dir in Direction.Cardinal) {
-        //     if (matrix.InBounds(Position + Dir)) {
-        //         Element e = matrix.Get(Position + Dir);
-        //         ActOnOther(matrix, e);
-        //     }
-        // }
+    public override void ActOnOther(Matrix matrix, Element other) {
+        if (other.IsHeating && RNG.Roll(other.CoolPotential)) {
+            other.ReceiveCooling(matrix);
+            ReceiveHeating(matrix);
+        }
 
-        base.Update(matrix);
+        if (other.IsCooling && RNG.Roll(other.HeatPotential))
+            ReceiveCooling(matrix);
+
+        if (other.OnFire)
+            other.ExtinguishFire();
     }
 
-    public override void ApplyHeating(Matrix matrix) {
+    public override void ReceiveHeating(Matrix matrix) {
         matrix.Set(Position, new Steam(Position));
     }
 
-    public override void ApplyCooling(Matrix matrix) {
+    public override void ReceiveCooling(Matrix matrix) {
         matrix.Set(Position, new Ice(Position));
     }
 }

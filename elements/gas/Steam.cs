@@ -6,8 +6,8 @@ namespace SharpSand;
 
 class Steam : Gas {
     public Steam(Vector2 position) : base(position) {
+        Density = -0.1f;
         Lifetime = 750;
-        DispersionRate = 10;
         BaseColor = new Color(232, 239, 239, 150);
         ModifyColor();
     }

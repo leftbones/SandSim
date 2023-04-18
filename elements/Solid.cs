@@ -8,13 +8,5 @@ abstract class Solid : Element {
         Type = ElementType.Solid;
     }
 
-    public override void Update(Matrix matrix) { }
-}
-
-class Stone : Solid {
-    public Stone(Vector2 position) : base(position) {
-        Color = Color.GRAY;
-    }
-
-    public override void Update(Matrix matrix) { }
+    public override void Step(Matrix matrix) { }
 }

@@ -48,10 +48,12 @@ public static unsafe class Utility {
                 Color c = GetElementOffsetColor(element_name);
                 int ix = x * scale;
                 int iy = y * scale;
-                ImageDrawPixel(ref Buffer, ix, iy, c);
-                ImageDrawPixel(ref Buffer, ix+1, iy, c);
-                ImageDrawPixel(ref Buffer, ix, iy+1, c);
-                ImageDrawPixel(ref Buffer, ix+1, iy+1, c);
+                
+                for (int i = ix; i < ix + scale; i++) {
+                    for (int j = iy; j < iy + scale; j++) {
+                        ImageDrawPixel(ref Buffer, i, j, c);
+                    }
+                }
             }
         }
 
