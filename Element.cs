@@ -25,7 +25,8 @@ abstract class Element {
     // Moveability
     public bool Settled { get; set; } = false;              // If the element has reached a stable position, has to become unsettled to move again
     public float Friction { get; set; } = 0.0f;             // Affects how likely an element is to become settled (Powder)
-    public float Spread { get; set; } = 0.0f;               // Affects how quickly an element will disperse horizontally (Liquid/Gas/Powder)
+    public float Spread { get; set; } = 0.0f;               // Affects how quickly an element will disperse horizontally (Liquid/Gas)
+    public float Drift { get; set; } = 0.0f;                // Affects how much an element drifts horizontally while falling (Powder)
     public float Density { get; set; } = 0.0f;              // Affects how liquids/gases move through eachother (Liquid/Gas) or how quickly powders dissolve in liquid (Powder)
 
     ////
@@ -101,7 +102,7 @@ abstract class Element {
                 Element e = matrix.Get(Position + Dir);
 
                 // If this element is on fire, attempt to spread fire to the neighbor
-                if (OnFire && RNG.Roll(e.HeatPotential / 100))
+                if (OnFire && RNG.Roll(e.HeatPotential / 50))
                     e.ReceiveHeating(matrix);
 
                 ActOnOther(matrix, e);
@@ -136,16 +137,6 @@ abstract class Element {
     public void ModifyColor() {
         if (OnFire) {
             Color = Effect.GetFireColor();
-            return;
-        }
-
-        if (Shimmer) {
-            Color = new Color(
-                Math.Min(Color.r + 50, 255),
-                Math.Min(Color.g + 50, 255),
-                Math.Min(Color.b + 50, 255),
-                Color.a
-            );
             return;
         }
 

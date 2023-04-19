@@ -7,6 +7,7 @@ class Ember : Powder {
     public Ember(Vector2 position) : base(position) {
         Lifetime = 300;
         Friction = 0.2f;
+        Drift = 0.1f;
         IsHeating = true;
         ColorOffset = 35;
         BaseColor = new Color(163, 49, 76, 255);
@@ -14,25 +15,22 @@ class Ember : Powder {
     }
 
     public override void Step(Matrix matrix) {
-        // Heat neighbors (cardinal)
-        foreach (Vector2 Dir in Direction.Cardinal) {
-            if (!matrix.IsEmpty(Position + Dir)) {
-                Element e = matrix.Get(Position + Dir);
-                ActOnOther(matrix, e);
-            }
+        // Chance to drift horizontally
+        foreach (Vector2 MoveDir in Direction.ShuffledHorizontal) {
+            if (RNG.Roll(Drift) && matrix.SwapIfEmpty(Position, Position + MoveDir))
+                return;
         }
 
         base.Step(matrix);
     }
 
     public override void ActOnOther(Matrix matrix, Element other) {
-        other.ReceiveHeating(matrix);
-        base.ActOnOther(matrix, other);
+        if (!other.IsHeating && RNG.Roll(other.HeatPotential))
+            other.ReceiveHeating(matrix);
     }
 
     public override void ReceiveCooling(Matrix matrix) {
-        if (RNG.Roll(CoolPotential))
-            Expire(matrix);
+        // Expire(matrix);
     }
 
     public override void Expire(Matrix matrix) {
@@ -40,6 +38,9 @@ class Ember : Powder {
         if (matrix.IsEmpty(Position + Direction.Up))
             matrix.Set(Position + Direction.Up, new Smoke(Position + Direction.Up));
 
-        matrix.Set(Position, new Soot(Position));
+        if (RNG.Chance(10))
+            matrix.Set(Position, new Soot(Position));
+        else
+            matrix.Set(Position, new Air(Position));
     }
 }

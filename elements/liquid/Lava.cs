@@ -7,6 +7,7 @@ namespace SharpSand;
 class Lava : Liquid {
     public Lava(Vector2 position) : base(position) {
         Spread = 2.0f;
+        CoolPotential = 0.001f;
         IsHeating = true;
         BaseColor = Effect.DarkenColor(Effect.GetFireColor(), 50);
         Color = BaseColor;
@@ -38,6 +39,6 @@ class Lava : Liquid {
     }
 
     public override void ReceiveCooling(Matrix matrix) {
-        matrix.Set(Position, new Concrete(Position));
+        matrix.Set(Position, new Air(Position));
     }
 }

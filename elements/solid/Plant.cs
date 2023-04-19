@@ -7,6 +7,7 @@ class Plant : Solid {
     public float GrowthChance = 0.08f;
 
     public Plant(Vector2 position) : base(position) {
+        Health = 250;
         HeatPotential = 1.0f;
         BurnDamageModifier = 2.0f;
         ActDirections = Direction.Cardinal;
@@ -30,15 +31,16 @@ class Plant : Solid {
 
     public override void Expire(Matrix matrix) {
         if (OnFire) {
-            // Small chance to create an ember
-            if (RNG.Chance(1))
-                matrix.Set(Position, new Ember(Position));
-
             // Create smoke if space above is empty
             if (matrix.IsEmpty(Position + Direction.Up))
                 matrix.Set(Position + Direction.Up, new Smoke(Position + Direction.Up));
-        }
 
+            // Small chance to create an ember
+            if (RNG.Chance(1)) {
+                matrix.Set(Position, new Ember(Position));
+                return;
+            }
+        }
         matrix.Set(Position, new Air(Position));
     }
 }

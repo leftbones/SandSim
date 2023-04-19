@@ -43,12 +43,15 @@ class Program {
             "<F2> Toggle FPS cap",
             "<F3> Toggle water spout",
             "<F4> Toggle world borders",
-            "<F5> Reset world"
+            "<F5> Reset world",
+            "<F6> Toggle weather",
+            "<F7> Cycle weather elements",
+            "<F8> Toggle element name"
         };
 
 
         // Spout
-        bool SpoutEnabled = true;
+        bool SpoutEnabled = false;
         int SpoutSize = 2;
         int SpoutDensity = 2;
         string SpoutElement = "Water";
@@ -56,7 +59,8 @@ class Program {
         // Weather
         bool WeatherEnabled = false;
         int WeatherStrength = 1;
-        string WeatherElement = "Snow";
+        var WeatherElements = new List<string>() { "Water", "Snow", "Ember" };
+        int WeatherIndex = 0;
 
         // Platforms
         DrawingTools.PaintBox(Matrix, new Vector2(((int)MatrixSize.X / 2.0f) - 60, 60), new Vector2(120, 5), "Concrete");
@@ -88,6 +92,17 @@ class Program {
             if (IsKeyPressed(KeyboardKey.KEY_F5))
                 Matrix.Reset();
 
+            if (IsKeyPressed(KeyboardKey.KEY_F6))
+                WeatherEnabled = !WeatherEnabled;
+
+            if (IsKeyPressed(KeyboardKey.KEY_F7)) {
+                if (WeatherIndex < WeatherElements.Count - 1) WeatherIndex++;
+                else WeatherIndex = 0;
+            }
+
+            if (IsKeyPressed(KeyboardKey.KEY_F8))
+                ShowElementName = !ShowElementName;
+
             // Update
             Matrix.Update();
             DrawingTools.Update();
@@ -118,7 +133,7 @@ class Program {
                 for (int i = 0; i < WeatherStrength; i++) {
                     Vector2 Pos = new Vector2(RNG.Range(0, (int)MatrixSize.X - 1), 0);
 
-                    Type t = Type.GetType("SharpSand." + WeatherElement)!;
+                    Type t = Type.GetType("SharpSand." + WeatherElements[WeatherIndex])!;
                     if (Matrix.IsEmpty(Pos))
                         Matrix.Set(Pos, (Element)Activator.CreateInstance(t, Pos)!);
                 }
