@@ -7,8 +7,7 @@ namespace SharpSand;
 class Lava : Liquid {
     public Lava(Vector2 position) : base(position) {
         Spread = 2.0f;
-        CoolPotential = 0.001f;
-        IsHeating = true;
+        HeatFactor = 10.0f;
         BaseColor = Effect.DarkenColor(Effect.GetFireColor(), 50);
         Color = BaseColor;
     }
@@ -28,17 +27,7 @@ class Lava : Liquid {
         base.Step(matrix);
     }
 
-    public override void ActOnOther(Matrix matrix, Element other) {
-        // Apply heat to non-heating neighbors, destroy them if they are on fire
-        if (!other.IsHeating && RNG.Roll(other.HeatPotential)) {
-            if (other.OnFire)
-                other.ReplaceWith(matrix, new Smoke(other.Position));
-            else
-                other.ReceiveHeating(matrix);
-        }
-    }
-
-    public override void ReceiveCooling(Matrix matrix) {
-        matrix.Set(Position, new Air(Position));
+    public override void CoolReaction(Matrix matrix) {
+        matrix.Set(Position, new Concrete(Position));
     }
 }

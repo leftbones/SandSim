@@ -21,7 +21,7 @@ class Snow : Powder {
         base.Step(matrix);
     }
 
-    public override void ReceiveHeating(Matrix matrix) {
+    public override void HeatReaction(Matrix matrix) {
         matrix.Set(Position, new Water(Position));
     }
 }

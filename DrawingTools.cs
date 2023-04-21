@@ -10,8 +10,8 @@ class DrawingTools {
     private List<Texture2D> ElementTextures = new List<Texture2D>();
     private int ElementIndex = 0;
 
-    private Vector2 ScreenSize;
-    private Vector2 MatrixSize;
+    private Vector2i ScreenSize;
+    private Vector2i MatrixSize;
     public int Scale { get; private set; }
 
     public int BrushSize { get; private set; } = 5;
@@ -26,7 +26,7 @@ class DrawingTools {
     public bool PaintOver { get; private set; } = false;
 
 
-    public DrawingTools(Vector2 screen_size, Vector2 matrix_size) {
+    public DrawingTools(Vector2i screen_size, Vector2i matrix_size) {
         ScreenSize = screen_size;
         MatrixSize = matrix_size;
         Scale = (int)(ScreenSize.X / MatrixSize.X);

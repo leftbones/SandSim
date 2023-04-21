@@ -4,18 +4,37 @@ using Raylib_cs;
 namespace SharpSand;
 
 class Matrix {
-    public Vector2 Size { get; private set; }
+    public Vector2i ScreenSize { get; private set; }
+    public int Scale { get; private set; }
+    public Vector2i Size { get { return new Vector2i(ScreenSize.X / Scale, ScreenSize.Y / Scale); } }
     public Element[,] Elements { get; private set; }
 
     public int Tick { get; private set; }
     public bool DestroyOutOfBounds { get; set; } = true;
 
-    public Matrix(Vector2 size) {
-        Size = size;
+    public bool Active = true;
+    public bool StepTick = false;
+
+    public Chunk[,] Chunks { get; private set; }
+    private int ChunkSize = 80;
+
+
+    public Matrix(Vector2i screen_size, int scale) {
+        ScreenSize = screen_size;
+        Scale = scale;
         Tick = 0;
 
+        // Create chunks
+        Chunks = new Chunk[ScreenSize.X / ChunkSize, ScreenSize.Y / ChunkSize];
+        for (int x = 0; x < ScreenSize.X / ChunkSize; x++) {
+            for (int y = 0; y < ScreenSize.Y / ChunkSize; y++) {
+                var ChunkPos = new Vector2i(x * ChunkSize, y * ChunkSize);
+                Chunks[x, y] = new Chunk(ChunkPos, ChunkSize);
+            }
+        }
+
         // Create elements array and fill with air
-        Elements = new Element[(int)Size.X, (int)Size.Y];
+        Elements = new Element[Size.X, Size.Y];
         for (int x = 0; x < Size.X; x++) {
             for (int y = 0; y < Size.Y; y++) {
                 Elements[x, y] = new Air(new Vector2(x, y));
@@ -25,30 +44,60 @@ class Matrix {
 
     // Update all non-air elements in the matrix
     public void Update() {
-        if (Tick % 2 == 0) {
-            for (int y = (int)Size.Y - 1; y >= 0; y--) {
-                for (int x = 0; x < (int)Size.X; x++) {
-                    Element e = Get(new Vector2(x, y));
-                    if (e is not Air && !e.AlreadyStepped) {
-                        e.LastPosition = e.Position;
-                        e.Step(this);
-                        e.Tick(this);
+        if (Active) {
+            foreach (Chunk Chunk in Chunks) {
+                if (Chunk.Awake) {
+                    if (Tick % 2 == 0) {
+                        for (int y = Chunk.Position.Y + Chunk.Size - 1; y >= Chunk.Position.Y; y--) {
+                            for (int x = Chunk.Position.X; x < Chunk.Position.X + Chunk.Size; x++) {
+                                Element e = Get(new Vector2(x / Scale, y / Scale));
+                                if (e is not Air && !e.AlreadyStepped) {
+                                    e.LastPosition = e.Position;
+                                    e.Step(this);
+                                    e.Tick(this);
+                                }
+                            }
+                        }
+                    } else {
+                        for (int y = Chunk.Position.Y + Chunk.Size - 1; y >= Chunk.Position.Y; y--) {
+                            for (int x = Chunk.Position.X + Chunk.Size - 1; x >= Chunk.Position.X; x--) {
+                                Element e = Get(new Vector2(x / Scale, y / Scale));
+                                if (e is not Air && !e.AlreadyStepped) {
+                                    e.LastPosition = e.Position;
+                                    e.Step(this);
+                                    e.Tick(this);
+                                }
+                            }
+                        }
                     }
                 }
+
+                Chunk.Update();
             }
-        } else {
-            for (int y = (int)Size.Y - 1; y >= 0; y--) {
-                for (int x = (int)Size.X - 1; x >= 0; x--) {
-                    Element e = Get(new Vector2(x, y));
-                    if (e is not Air && !e.AlreadyStepped) {
-                        e.LastPosition = e.Position;
-                        e.Step(this);
-                        e.Tick(this);
-                    }
-                }
+
+            Tick++;
+
+            if (StepTick) {
+                Active = false;
+                StepTick = false;
             }
         }
-        Tick++;
+    }
+
+    // Wake the chunk containing an element
+    public void WakeChunk(Element e) {
+        Chunk c = GetChunk(e.Position);
+        c.WakeNextStep = true;
+
+        if (InBounds(e.Position + Direction.Left) && e.Position.X == c.Position.X / Scale) GetChunk(e.Position + Direction.Left).WakeNextStep = true;
+        if (InBounds(e.Position + Direction.Up) && e.Position.Y == c.Position.Y / Scale) GetChunk(e.Position + Direction.Up).WakeNextStep = true;
+        if (InBounds(e.Position + Direction.Right) && e.Position.X >= (c.Position.X / Scale) + (c.Size / Scale) - 1) GetChunk(e.Position + Direction.Right).WakeNextStep = true;
+        if (InBounds(e.Position + Direction.Down) && e.Position.Y >= (c.Position.Y / Scale) + (c.Size / Scale) - 1) GetChunk(e.Position + Direction.Down).WakeNextStep = true;
+    }
+
+    // Get a chunk from matrix coordinates
+    public Chunk GetChunk(Vector2 position) {
+        return Chunks[(int)Math.Floor((position.X / ChunkSize) * Scale), (int)Math.Floor((position.Y / ChunkSize) * Scale)];
     }
 
     // Get an element from the matrix
@@ -62,16 +111,18 @@ class Matrix {
             Elements[(int)position.X, (int)position.Y] = element;
             element.Position = position;
             element.LastDirection = Direction.GetMovementDirection(element.LastPosition, element.Position);
+            WakeChunk(element);
             return true;
         }
         return false;
     }
 
     // Set an element in the matrix without checking if the position is in bounds
-    public bool FastSet(Vector2 position, Element element) {
-        Elements[(int)position.X, (int)position.Y] = element;
-        return true;
-    }
+    // public bool FastSet(Vector2 position, Element element) {
+    //     Elements[(int)position.X, (int)position.Y] = element;
+    //     WakeChunk(element);
+    //     return true;
+    // }
 
     // Swap the position of two elements in the matrix if the destination is in bounds
     public bool Swap(Vector2 pos1, Vector2 pos2) {
@@ -80,10 +131,14 @@ class Matrix {
             Element e2 = Get(pos2);
             Set(pos2, e1);
             Set(pos1, e2);
+            WakeChunk(e1);
+            WakeChunk(e2);
             e1.AlreadyStepped = true;
             return true;
         } else if (DestroyOutOfBounds) {
-            Set(pos1, new Air(pos1));
+            Element air = new Air(pos1);
+            Set(pos1, air);
+            WakeChunk(air);
             return true;
         }
         return false;
@@ -112,7 +167,9 @@ class Matrix {
                 return Swap(pos1, pos2);
             return false;
         } else if (DestroyOutOfBounds) {
-            Set(pos1, new Air(pos1));
+            Element air = new Air(pos1);
+            Set(pos1, air);
+            WakeChunk(air);
             return true;
         }
         return false;
@@ -126,7 +183,9 @@ class Matrix {
                 return Swap(pos1, pos2);
             return false;
         } else if (DestroyOutOfBounds) {
-            Set(pos1, new Air(pos1));
+            Element air = new Air(pos1);
+            Set(pos1, air);
+            WakeChunk(air);
             return true;
         }
         return false;
@@ -145,7 +204,9 @@ class Matrix {
             if (e1.Density < e2.Density)
                 return Swap(pos1, pos2);
         } else if (DestroyOutOfBounds) {
-            Set(pos1, new Air(pos1));
+            Element air = new Air(pos1);
+            Set(pos1, air);
+            WakeChunk(air);
             return true;
         }
         return false;
@@ -167,7 +228,9 @@ class Matrix {
             if (e1.Density > e2.Density)
                 return Swap(pos1, pos2);
         } else if (DestroyOutOfBounds) {
-            Set(pos1, new Air(pos1));
+            Element air = new Air(pos1);
+            Set(pos1, air);
+            WakeChunk(air);
             return true;
         }
         return false;
@@ -175,7 +238,7 @@ class Matrix {
 
     // Check if a position is in bounds
     public bool InBounds(Vector2 position) {
-        return (int)position.X >= 0 && (int)position.X < (int)Size.X && (int)position.Y >= 0 && (int)position.Y < (int)Size.Y;
+        return (int)position.X >= 0 && (int)position.X < Size.X && (int)position.Y >= 0 && (int)position.Y < Size.Y;
     }
 
     // Check if a position is empty (contains air) and in bounds
@@ -255,7 +318,7 @@ class Matrix {
 
     // Reset the entire matrix to air
     public void Reset() {
-        Elements = new Element[(int)Size.X, (int)Size.Y];
+        Elements = new Element[Size.X, Size.Y];
         for (int x = 0; x < Size.X; x++) {
             for (int y = 0; y < Size.Y; y++) {
                 Elements[x, y] = new Air(new Vector2(x, y));

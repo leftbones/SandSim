@@ -31,12 +31,12 @@ abstract class Element {
 
     ////
     // Temperature
-    public float Temperature { get; set; } = 0.0f;          // Used for tracking heating/cooling from outside forces
-    public float HeatPotential { get; set; } = 1.0f;        // How likely the element is to be affected by heating (1.0 is 100%)
-    public float CoolPotential { get; set; } = 1.0f;        // How likely the element is to be affected by cooling (1.0 is 100%)
-    public bool IsHeating { get; set; } = false;            // If the element applies heating to other elements
-    public bool IsCooling { get; set; } = false;            // If the element applies cooling to other elements
+    public float IdleTemp { get; set; } = 50.0f;            // The resting temperature of the element
+    public float ActiveTemp { get; set; } = 50.0f;          // The current temperature of the element
+    public float HeatFactor { get; set; } = 0.0f;           // How much heating the element gives off
+    public float CoolFactor { get; set; } = 0.0f;           // How much cooling the element gives off
 
+    public bool Flammable { get; set; } = false;            // If the element can be set on fire
     public float BurnDamageModifier { get; set; } = 1.0f;   // How resistant the element is to damage from fire (doesn't affect flammability)
 
     ////
@@ -73,11 +73,11 @@ abstract class Element {
             ModifyColor();
         }
 
-        if (Position == LastPosition && Type != ElementType.Gas) // TODO: Revisit if this gas exclusion is still necessary
-            Settled = true;
-
         if (!Settled || ForceAct)
             ActOnNeighbors(matrix);
+
+        if (Position == LastPosition && Type != ElementType.Gas) // TODO: Revisit if this gas exclusion is still necessary
+            Settled = true;
     }
 
     // Check surroundings and move accordingly
@@ -101,21 +101,47 @@ abstract class Element {
             if (matrix.InBounds(Position + Dir)) {
                 Element e = matrix.Get(Position + Dir);
 
-                // If this element is on fire, attempt to spread fire to the neighbor
-                if (OnFire && RNG.Roll(e.HeatPotential / 50))
-                    e.ReceiveHeating(matrix);
-
-                ActOnOther(matrix, e);
                 UnsettleOther(e);
+                ActOnOther(matrix, e);
+
+                // Temperature transference
+                if (HeatFactor > 0.0 || OnFire) {
+                    if (OnFire && e.Flammable && RNG.Chance(1)) e.OnFire = true;
+                    float amount = OnFire ? Math.Max(HeatFactor, 1.0f) : HeatFactor;
+                    e.ChangeTemp(matrix, amount);
+                    if (e.CoolFactor > 0.0)
+                        ChangeTemp(matrix, -e.CoolFactor);
+                }
+
+                if (CoolFactor > 0.0) {
+                    e.ChangeTemp(matrix, -CoolFactor);
+                    if (e.HeatFactor > 0.0) {
+                        float amount = e.OnFire ? 2.0f : e.HeatFactor;
+                        ChangeTemp(matrix, amount);
+                    }
+                }
             }
         }
     }
 
-    // How the element reacts to being heated by neighbors
-    public virtual void ReceiveHeating(Matrix matrix) { }
+    // Alter the elements active temperature
+    public virtual void ChangeTemp(Matrix matrix, float amount) {
+        ActiveTemp += amount;
 
-    // How the element reacts to being cooled by neighbors
-    public virtual void ReceiveCooling(Matrix matrix) { }
+        if (ActiveTemp > IdleTemp) ActiveTemp -= 0.5f;
+        if (ActiveTemp < IdleTemp) ActiveTemp += 0.5f;
+
+        if (ActiveTemp >= 100.0f)
+            HeatReaction(matrix);
+        else if (ActiveTemp <= 0.0f)
+            CoolReaction(matrix);
+    }
+
+    // Called when temperature reaches 100.0
+    public virtual void HeatReaction(Matrix matrix) { }
+
+    // Called when temperature reaches 0.0
+    public virtual void CoolReaction(Matrix matrix) { }
 
     // Triggered when TicksLived reaches Lifetime or Health reaches 0
     public virtual void Expire(Matrix matrix) {

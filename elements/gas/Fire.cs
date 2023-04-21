@@ -10,7 +10,7 @@ class Fire : Gas {
     public Fire(Vector2 position) : base(position) {
         Lifetime = 10;
         Density = -1.0f;
-        IsHeating = true;
+        HeatFactor = 2.0f;
         BaseColor = Effect.GetFireColor();
         Color = BaseColor;
     }
@@ -21,12 +21,6 @@ class Fire : Gas {
             Lifetime++;
 
         base.Step(matrix);
-    }
-
-    public override void ActOnOther(Matrix matrix, Element other) {
-        // Apply heat to non-heating neighbors
-        if (!other.IsHeating && RNG.Roll(other.HeatPotential))
-            other.ReceiveHeating(matrix);
     }
 
     public override void Expire(Matrix matrix) {

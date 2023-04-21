@@ -8,7 +8,7 @@ class Plant : Solid {
 
     public Plant(Vector2 position) : base(position) {
         Health = 250;
-        HeatPotential = 1.0f;
+        Flammable = true;
         BurnDamageModifier = 2.0f;
         ActDirections = Direction.Cardinal;
         ForceAct = true;
@@ -24,7 +24,7 @@ class Plant : Solid {
         }
     }
 
-    public override void ReceiveHeating(Matrix matrix) {
+    public override void HeatReaction(Matrix matrix) {
         if (!OnFire)
             OnFire = true;
     }

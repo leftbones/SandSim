@@ -5,10 +5,10 @@ namespace SharpSand;
 
 class Ember : Powder {
     public Ember(Vector2 position) : base(position) {
-        Lifetime = 300;
+        Lifetime = 500;
         Friction = 0.2f;
         Drift = 0.1f;
-        IsHeating = true;
+        HeatFactor = 2.5f;
         ColorOffset = 35;
         BaseColor = new Color(163, 49, 76, 255);
         ModifyColor();
@@ -24,13 +24,12 @@ class Ember : Powder {
         base.Step(matrix);
     }
 
-    public override void ActOnOther(Matrix matrix, Element other) {
-        if (!other.IsHeating && RNG.Roll(other.HeatPotential))
-            other.ReceiveHeating(matrix);
-    }
+    public override void CoolReaction(Matrix matrix) {
+        if (RNG.Chance(25))
+            matrix.Set(Position, new Soot(Position));
 
-    public override void ReceiveCooling(Matrix matrix) {
-        // Expire(matrix);
+        if (matrix.IsEmpty(Position + Direction.Up) && RNG.Chance(25))
+            matrix.Set(Position + Direction.Up, new Smoke(Position + Direction.Up));
     }
 
     public override void Expire(Matrix matrix) {
