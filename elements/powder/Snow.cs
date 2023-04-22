@@ -4,7 +4,7 @@ using Raylib_cs;
 namespace SharpSand;
 
 class Snow : Powder {
-    public Snow(Vector2 position) : base(position) {
+    public Snow(Vector2i position) : base(position) {
         Friction = 0.6f;
         Drift = 0.3f;
         BaseColor = new Color(255, 255, 255, 255);
@@ -13,7 +13,7 @@ class Snow : Powder {
 
     public override void Step(Matrix matrix) {
         // Chance to drift horizontally
-        foreach (Vector2 MoveDir in Direction.ShuffledHorizontal) {
+        foreach (Vector2i MoveDir in Direction.ShuffledHorizontal) {
             if (RNG.Roll(Drift) && matrix.SwapIfEmpty(Position, Position + MoveDir))
                 return;
         }

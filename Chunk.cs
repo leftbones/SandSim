@@ -21,8 +21,8 @@ class Chunk {
     }
 
     public void DebugDraw() {
-        Color color = Color.WHITE;
-        if (!Awake) color = Color.DARKGRAY;
+        Color color = new Color(255, 255, 255, 150);
+        if (!Awake) color = new Color(255, 255, 255, 25);
         DrawRectangleLines(Position.X, Position.Y, Size, Size, color);
     }
 }

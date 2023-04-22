@@ -9,7 +9,7 @@ namespace SharpSand;
 // - Chance to move Left or Right depending on Friction property
 
 abstract class Powder : Element {
-    public Powder(Vector2 position) : base(position) {
+    public Powder(Vector2i position) : base(position) {
         Type = ElementType.Powder;
     }
 
@@ -31,7 +31,7 @@ abstract class Powder : Element {
         }
 
         // Move down left/right (in last direction or random if last direction is not down left/right) if space is empty or contains liquid or gas
-        Vector2 MoveDir = LastDirection;
+        Vector2i MoveDir = LastDirection;
         if (!Direction.DiagonalDown.Contains(LastDirection))
             MoveDir = Direction.RandomDiagonalDown;
 

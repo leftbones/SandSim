@@ -195,7 +195,7 @@ public struct Vector2i : IEquatable<Vector2i> {
 
 
 	////
-	// Overrides
+	// Overrides + Other
 
 	public override string ToString() {
 		return string.Format("({0}, {1})", X, Y);
@@ -205,11 +205,15 @@ public struct Vector2i : IEquatable<Vector2i> {
 		return obj is Vector2i && base.Equals(obj);
 	}
 
+	public override int GetHashCode() {
+		return HashCode.Combine(X, Y);
+	}
+
 	public bool Equals(Vector2i other) {
 		return X == other.X && Y == other.Y;
 	}
 
-	public override int GetHashCode() {
-		return HashCode.Combine(X, Y);
+	public Vector2 ToVector2() {
+		return new Vector2(X, Y);
 	}
 }

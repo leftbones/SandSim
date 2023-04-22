@@ -69,12 +69,12 @@ class DrawingTools {
     // Paint elements in the brush area, scattered based on density
     public void Paint(Matrix matrix) {
         for (int i = 0; i < BrushDensity; i++) {
-            Vector2 Pos = GetMousePos();
+            Vector2i Pos = GetMousePos();
             int Size = BrushSize * (Scale / 2);
             int BX = ((int)Pos.X * Scale) - (Size / Scale) * Scale;
             int BY = ((int)Pos.Y * Scale) - (Size / Scale) * Scale;
 
-            Vector2 Position = new Vector2(
+            Vector2i Position = new Vector2i(
                 RNG.Range(BX, BX + (Size * Scale / 2) - 1) / Scale,
                 RNG.Range(BY, BY + (Size * Scale / 2) - 1) / Scale
             );
@@ -93,14 +93,14 @@ class DrawingTools {
 
     // Paint every element within the brush area
     public void PaintSolid(Matrix matrix) {
-        Vector2 Pos = GetMousePos();
+        Vector2i Pos = GetMousePos();
         int Size = BrushSize * (Scale / 2);
         int BX = ((int)Pos.X * Scale) - (Size / Scale) * Scale;
         int BY = ((int)Pos.Y * Scale) - (Size / Scale) * Scale;
 
         for (int x = BX; x < BX + (Size * Scale / 2); x++) {
             for (int y = BY; y < BY + (Size * Scale / 2); y++) {
-                Vector2 Position = new Vector2(x / Scale, y / Scale);
+                Vector2i Position = new Vector2i(x / Scale, y / Scale);
 
                 if (PaintOver || matrix.IsEmpty(Position)) {
                     Type t = Type.GetType(BrushElement)!;
@@ -113,38 +113,38 @@ class DrawingTools {
 
     // Erase elements (paints air)
     public void Erase(Matrix matrix) {
-        Vector2 Pos = GetMousePos();
+        Vector2i Pos = GetMousePos();
         int Size = BrushSize * (Scale / 2);
         int BX = ((int)Pos.X * Scale) - (Size / Scale) * Scale;
         int BY = ((int)Pos.Y * Scale) - (Size / Scale) * Scale;
 
         for (int x = BX; x < BX + (Size * Scale / 2); x++) {
             for (int y = BY; y < BY + (Size * Scale / 2); y++) {
-                Vector2 Position = new Vector2(x / Scale, y / Scale);
+                Vector2i Position = new Vector2i(x / Scale, y / Scale);
                 matrix.Set(Position, new Air(Position));
             }
         }
     }
 
     // Paint a box of an element to the matrix 
-    public void PaintBox(Matrix matrix, Vector2 origin, Vector2 size, string element_name) {
+    public void PaintBox(Matrix matrix, Vector2i origin, Vector2i size, string element_name) {
         for (int x = (int)origin.X; x < (int)origin.X + size.X; x++) {
             for (int y = (int)origin.Y; y < (int)origin.Y + size.Y; y++) {
-                Vector2 Pos = new Vector2(x, y);
+                Vector2i Pos = new Vector2i(x, y);
                 Type t = Type.GetType("SharpSand." + element_name)!;
-                matrix.Set(new Vector2(x, y), (Element)Activator.CreateInstance(t, Pos)!);
+                matrix.Set(new Vector2i(x, y), (Element)Activator.CreateInstance(t, Pos)!);
             }
         }
     }
 
     // Paint a line of the given thickness from point a to point b (only straight lines for now)
-    public void PaintLine(Matrix matrix, Vector2 a, Vector2 b, string element_name) {
+    public void PaintLine(Matrix matrix, Vector2i a, Vector2i b, string element_name) {
 
     }
 
     // Draw a rectangle indicator for the brush position and size
     public void DrawBrushIndicator() {
-        Vector2 Pos = GetMousePos();
+        Vector2i Pos = GetMousePos();
         int Size = BrushSize * (Scale / 2);
         int BX = ((int)Pos.X * Scale) - (Size / Scale) * Scale;
         int BY = ((int)Pos.Y * Scale) - (Size / Scale) * Scale;
@@ -160,12 +160,12 @@ class DrawingTools {
         string Text = BrushElement.Split(".")[1];
         if (PaintOver)
             Text += " [+]";
-        DrawTextShadow(Text, new Vector2(50, 6), Vector2.One, 20, Theme.ForegroundColor, Theme.ShadowColor);
+        DrawTextShadow(Text, new Vector2i(50, 6), Vector2i.One, 20, Theme.ForegroundColor, Theme.ShadowColor);
     }
 
     // Draw text with a drop shadow
-    public void DrawTextShadow(string text, Vector2 position, Vector2? shadow_offset=null, int? font_size=null, Color? text_color=null, Color? shadow_color=null) {
-        var so = shadow_offset ?? Vector2.One;
+    public void DrawTextShadow(string text, Vector2i position, Vector2i? shadow_offset=null, int? font_size=null, Color? text_color=null, Color? shadow_color=null) {
+        var so = shadow_offset ?? Vector2i.One;
         var fs = font_size ?? 20;
         var tc = text_color ?? Theme.ForegroundColor;
         var sc = shadow_color ?? Theme.ShadowColor;
@@ -174,20 +174,20 @@ class DrawingTools {
     }
 
     // Draw the current FPS to the upper right corner of the screen
-    public void DrawFPS() {
+    public void DrawFPS(Color? color=null) {
+        color = color ?? Theme.ForegroundColor;
         string FPS = String.Format("{0} FPS", GetFPS());
-        DrawTextShadow(FPS, new Vector2(ScreenSize.X - (MeasureText(FPS, 20) + 5), 5), Vector2.One, 20, Theme.ForegroundColor, Theme.ShadowColor);
+        DrawTextShadow(FPS, new Vector2i(ScreenSize.X - (MeasureText(FPS, 20) + 5), 5), Vector2i.One, 20, color, Theme.ShadowColor);
     }
 
     // Draw all of the HUD elements
     public void DrawHUD() {
         DrawBrushElement();
-        DrawTextShadow("Brush: " + BrushSize, new Vector2(5, 30));
-        DrawFPS();
+        DrawTextShadow("Brush: " + BrushSize, new Vector2i(5, 30));
     }
 
     // Get the mouse position in the matrix (mouse position on screen adjusted for scale)
-    public Vector2 GetMousePos() {
-        return Utility.GridSnap(GetMousePosition() / Scale, 1);
+    public Vector2i GetMousePos() {
+        return Utility.GridSnap(new Vector2i(GetMousePosition()) / Scale, 1);
     }
 }

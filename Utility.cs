@@ -7,10 +7,10 @@ namespace SharpSand;
 
 public static unsafe class Utility {
     // Snap coordinates to the nearest integer grid location
-    public static Vector2 GridSnap(Vector2 position, int grid_size) {
-        return new Vector2(
-            (float)Math.Round(position.X / grid_size) * grid_size,
-            (float)Math.Round(position.Y / grid_size) * grid_size
+    public static Vector2i GridSnap(Vector2i position, int grid_size) {
+        return new Vector2i(
+            (int)Math.Round((float)position.X / grid_size) * grid_size,
+            (int)Math.Round((float)position.Y / grid_size) * grid_size
         );
     }
 
@@ -27,14 +27,14 @@ public static unsafe class Utility {
     // Gets the base color from an element by instancing it (this is not good)
     public static Color GetElementBaseColor(string element_name) {
         Type t = Type.GetType(element_name)!;
-        Element e = (Element)Activator.CreateInstance(t, Vector2.Zero)!;
+        Element e = (Element)Activator.CreateInstance(t, Vector2i.Zero)!;
         return e.BaseColor;
     }
 
     // Gets an offset color from an element by instancing it (this is also not good)
     public static Color GetElementOffsetColor(string element_name) {
         Type t = Type.GetType(element_name)!;
-        Element e = (Element)Activator.CreateInstance(t, Vector2.Zero)!;
+        Element e = (Element)Activator.CreateInstance(t, Vector2i.Zero)!;
         return OffsetColor(e.BaseColor, e.ColorOffset);
     }
 

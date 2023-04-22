@@ -6,7 +6,7 @@ namespace SharpSand;
 class Plant : Solid {
     public float GrowthChance = 0.08f;
 
-    public Plant(Vector2 position) : base(position) {
+    public Plant(Vector2i position) : base(position) {
         Health = 250;
         Flammable = true;
         BurnDamageModifier = 2.0f;

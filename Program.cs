@@ -13,7 +13,7 @@ class Program {
         int Scale = 4;
 
         SetTraceLogLevel(LOG_WARNING | LOG_ERROR | LOG_FATAL);
-        InitWindow((int)ScreenSize.X, (int)ScreenSize.Y, "Sand");
+        InitWindow(ScreenSize.X, ScreenSize.Y, "Sand");
         SetTargetFPS(200);
 
         Console.WriteLine("[SYSTEM] Matrix initialized");
@@ -28,6 +28,7 @@ class Program {
         bool ShowHelpText = false;
         bool ShowElementName = false;
         bool LimitFPS = true;
+        bool DrawChunkBorders = false;
 
         List<string> HelpText = new List<string>() {
             "Controls:",
@@ -63,11 +64,6 @@ class Program {
         int WeatherStrength = 1;
         var WeatherElements = new List<string>() { "Water", "Snow", "Ember" };
         int WeatherIndex = 0;
-
-        // Platforms
-        DrawingTools.PaintBox(Matrix, new Vector2((Matrix.Size.X / 2.0f) - 60, 60), new Vector2(120, 5), "Concrete");
-        DrawingTools.PaintBox(Matrix, new Vector2((Matrix.Size.X / 2.0f) - 90, 120), new Vector2(60, 5), "Concrete");
-        DrawingTools.PaintBox(Matrix, new Vector2((Matrix.Size.X / 2.0f) + 30, 120), new Vector2(60, 5), "Concrete");
 
         Console.WriteLine("[SYSTEM] Init complete");
 
@@ -105,11 +101,14 @@ class Program {
             if (IsKeyPressed(KeyboardKey.KEY_F8))
                 ShowElementName = !ShowElementName;
 
+            if (IsKeyPressed(KeyboardKey.KEY_F9))
+                DrawChunkBorders = !DrawChunkBorders;
+
             if (IsKeyPressed(KeyboardKey.KEY_SPACE)) {
                 Matrix.Active = !Matrix.Active;
             }
 
-            if (IsKeyPressed(KeyboardKey.KEY_P)) {
+            if (IsKeyPressed(KeyboardKey.KEY_T)) {
                 if (!Matrix.Active) {
                     Matrix.Active = true;
                     Matrix.StepTick = true;
@@ -133,7 +132,7 @@ class Program {
             // Spout
             if (SpoutEnabled) {
                 for (int i = 0; i < SpoutDensity; i++) {
-                    Vector2 SpoutPos = new Vector2((Matrix.Size.X / 2.0f) + RNG.Range(-SpoutSize, SpoutSize), SpoutSize + RNG.Range(-SpoutSize, SpoutSize));
+                    Vector2i SpoutPos = new Vector2i((Matrix.Size.X / 2) + RNG.Range(-SpoutSize, SpoutSize), SpoutSize + RNG.Range(-SpoutSize, SpoutSize));
 
                     Type t = Type.GetType("SharpSand." + SpoutElement)!;
                     if (Matrix.IsEmpty(SpoutPos))
@@ -144,7 +143,7 @@ class Program {
             // Weather
             if (WeatherEnabled) {
                 for (int i = 0; i < WeatherStrength; i++) {
-                    Vector2 Pos = new Vector2(RNG.Range(0, Matrix.Size.X - 1), 0);
+                    Vector2i Pos = new Vector2i(RNG.Range(0, Matrix.Size.X - 1), 0);
 
                     Type t = Type.GetType("SharpSand." + WeatherElements[WeatherIndex])!;
                     if (Matrix.IsEmpty(Pos))
@@ -158,8 +157,7 @@ class Program {
             foreach (Element e in Matrix.Elements) {
                 if (e is not Air) {
                     Color c = e.Color;
-                    // if (e.Settled) c = Color.MAGENTA;
-                    ImageDrawPixel(ref BufferImage, (int)e.Position.X, (int)e.Position.Y, c);
+                    ImageDrawPixel(ref BufferImage, e.Position.X, e.Position.Y, c);
                     e.AlreadyStepped = false;
                 }
             }
@@ -172,33 +170,40 @@ class Program {
 
             DrawTexturePro(BufferTexture, new Rectangle(0, 0, Matrix.Size.X, Matrix.Size.Y), new Rectangle(0, 0, ScreenSize.X, ScreenSize.Y), Vector2.Zero, 0, Color.WHITE);
 
-            // Draw Chunks (Debug)
-            foreach (Chunk Chunk in Matrix.Chunks) {
-                Chunk.DebugDraw();
+            // Draw Chunk Borders
+            if (DrawChunkBorders) {
+                foreach (Chunk Chunk in Matrix.Chunks) {
+                    Chunk.DebugDraw();
+                }
             }
 
+            // Draw Interface
             DrawingTools.DrawHUD();
             DrawingTools.DrawBrushIndicator();
+
+            Color fps_color = Color.WHITE;
+            if (!LimitFPS) fps_color = Color.YELLOW;
+            DrawingTools.DrawFPS(fps_color);
 
             // Show help text
             if (ShowHelpText) {
                 for (int i = 0; i < HelpText.Count; i++) { 
-                    DrawingTools.DrawTextShadow(HelpText[i], new Vector2(5, 80 + (25 * i)));
+                    DrawingTools.DrawTextShadow(HelpText[i], new Vector2i(5, 80 + (25 * i)));
                 }
             } else {
-                DrawingTools.DrawTextShadow("<F1> Help", new Vector2(5, 80));
+                DrawingTools.DrawTextShadow("<F1> Help", new Vector2i(5, 80));
             }
 
             // Draw name of element under cursor
             if (ShowElementName) {
-                Vector2 MousePos = DrawingTools.GetMousePos();
+                Vector2i MousePos = DrawingTools.GetMousePos();
                 if (Matrix.InBounds(MousePos)) {
                     Element e = Matrix.Get(MousePos);
                     string ElementName = e.ToString()!.Split(".")[1];
                     if (e.OnFire) ElementName += " (on fire)";
-                    ElementName += String.Format(" - {0}T", e.ActiveTemp);
+                    ElementName += String.Format(" (Temp: {0})", e.ActiveTemp);
 
-                    DrawingTools.DrawTextShadow(ElementName, (MousePos * DrawingTools.Scale) + new Vector2(5, 5));
+                    DrawingTools.DrawTextShadow(ElementName, (MousePos * DrawingTools.Scale) + new Vector2i(5, 5));
                 }
             }
 

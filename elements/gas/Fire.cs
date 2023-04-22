@@ -7,7 +7,7 @@ namespace SharpSand;
 // - Fix back and forth "jittering" (very obvious when burning Plant)
 
 class Fire : Gas {
-    public Fire(Vector2 position) : base(position) {
+    public Fire(Vector2i position) : base(position) {
         Lifetime = 10;
         Density = -1.0f;
         HeatFactor = 2.0f;

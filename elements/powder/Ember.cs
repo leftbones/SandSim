@@ -4,7 +4,7 @@ using Raylib_cs;
 namespace SharpSand;
 
 class Ember : Powder {
-    public Ember(Vector2 position) : base(position) {
+    public Ember(Vector2i position) : base(position) {
         Lifetime = 500;
         Friction = 0.2f;
         Drift = 0.1f;
@@ -16,7 +16,7 @@ class Ember : Powder {
 
     public override void Step(Matrix matrix) {
         // Chance to drift horizontally
-        foreach (Vector2 MoveDir in Direction.ShuffledHorizontal) {
+        foreach (Vector2i MoveDir in Direction.ShuffledHorizontal) {
             if (RNG.Roll(Drift) && matrix.SwapIfEmpty(Position, Position + MoveDir))
                 return;
         }

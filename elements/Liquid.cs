@@ -4,22 +4,25 @@ using Raylib_cs;
 namespace SharpSand;
 
 abstract class Liquid : Element {
-    public Liquid(Vector2 position) : base(position) {
+    public Liquid(Vector2i position) : base(position) {
         Type = ElementType.Liquid;
+        Density = 100.0f;
     }
 
     public override void Step(Matrix matrix) {
         // Unsettle if down/left/right space is empty
         if (Settled) {
-            if (matrix.IsTypeOrEmpty(Position + Direction.Down, ElementType.Gas) || matrix.IsTypeOrEmpty(Position + Direction.Left, ElementType.Gas) || matrix.IsTypeOrEmpty(Position + Direction.Right, ElementType.Gas))
-                Settled = false;
-            else
-                return;
+			foreach (Vector2i Dir in Direction.LowerHalf)
+				if (matrix.IsTypeOrEmpty(Position + Dir, ElementType.Gas))
+					Settled = false;
         }
+
+		if (Settled)
+			return;
 
         // Chance to move down + left/right when falling
         if (RNG.Chance(5)) {
-            List<Vector2> DLDR = Direction.ShuffledDiagonalDown;
+            List<Vector2i> DLDR = Direction.ShuffledDiagonalDown;
             if (matrix.SwapIfTypeOrEmpty(Position, Position + DLDR[0], ElementType.Gas))
                 return;
 
@@ -27,13 +30,13 @@ abstract class Liquid : Element {
                 return;
         }
 
-        // Move down if space is empty or contains gas
-        if (matrix.SwapIfTypeOrEmpty(Position, Position + Direction.Down, ElementType.Gas))
+        // Move down if space is empty or contains a less dense liquid or contains gas
+        if (matrix.SwapIfLessDense(Position, Position + Direction.Down) || matrix.SwapIfTypeOrEmpty(Position, Position + Direction.Down, ElementType.Gas))
             return;
 
         // Move left/right based on the current tick
-        Vector2 MoveDir = matrix.Tick % 2 == 0 ? Direction.Left : Direction.Right;
-        for (int i = 0; i < (int)Spread; i++) {
+        Vector2i MoveDir = matrix.Tick % 2 == 0 ? Direction.Left : Direction.Right;
+        for (int i = 0; i < Spread; i++) {
             if (RNG.CoinFlip() && !matrix.SwapIfTypeOrEmpty(Position, Position + MoveDir, ElementType.Gas)) {
                 Settled = true;
                 return;

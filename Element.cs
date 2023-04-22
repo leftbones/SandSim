@@ -10,9 +10,9 @@ enum ElementType { Solid, Liquid, Gas, Powder }
 abstract class Element {
     public ElementType Type { get; set; }
 
-    public Vector2 Position { get; set; }
-    public Vector2 LastPosition { get; set; }
-    public Vector2 LastDirection { get; set; }
+    public Vector2i Position { get; set; }
+    public Vector2i LastPosition { get; set; }
+    public Vector2i LastDirection { get; set; }
 
     ////
     // Tracking
@@ -24,7 +24,7 @@ abstract class Element {
     ////
     // Moveability
     public bool Settled { get; set; } = false;              // If the element has reached a stable position, has to become unsettled to move again
-    public float Friction { get; set; } = 0.0f;             // Affects how likely an element is to become settled (Powder)
+    public float Friction { get; set; } = 1.0f;             // Affects how likely an element is to become settled (Powder)
     public float Spread { get; set; } = 0.0f;               // Affects how quickly an element will disperse horizontally (Liquid/Gas)
     public float Drift { get; set; } = 0.0f;                // Affects how much an element drifts horizontally while falling (Powder)
     public float Density { get; set; } = 0.0f;              // Affects how liquids/gases move through eachother (Liquid/Gas) or how quickly powders dissolve in liquid (Powder)
@@ -42,7 +42,7 @@ abstract class Element {
     ////
     // Interaction
     public bool ForceAct { get; set; } = false;                             // If the element should act on its neighbors (this step) regardless of if it is settled or not
-    public List<Vector2> ActDirections { get; set; } = Direction.Full;      // The directions in which this element interacts with neighboring elements
+    public List<Vector2i> ActDirections { get; set; } = Direction.Full;      // The directions in which this element interacts with neighboring elements
 
     ////
     // Status
@@ -56,7 +56,7 @@ abstract class Element {
     public int ColorOffset { get; set; } = 25;                      // How far the BaseColor should be offset
 
 
-    public Element(Vector2 position) {
+    public Element(Vector2i position) {
         Position = position;
         LastPosition = position;
     }
@@ -73,8 +73,10 @@ abstract class Element {
             ModifyColor();
         }
 
-        if (!Settled || ForceAct)
+        if ((!Settled && Type != ElementType.Solid ) || ForceAct) {
+            matrix.WakeChunk(this);
             ActOnNeighbors(matrix);
+        }
 
         if (Position == LastPosition && Type != ElementType.Gas) // TODO: Revisit if this gas exclusion is still necessary
             Settled = true;
@@ -97,7 +99,7 @@ abstract class Element {
     // Call ActOnOther and UnsettleOther for all neighbors in the directions set on ActDirections
     // [Note] This used to check if the element was air before acting on it, but that actually hurt performance instead of helping it
     public virtual void ActOnNeighbors(Matrix matrix) {
-        foreach (Vector2 Dir in ActDirections) {
+        foreach (Vector2i Dir in ActDirections) {
             if (matrix.InBounds(Position + Dir)) {
                 Element e = matrix.Get(Position + Dir);
 
@@ -107,19 +109,21 @@ abstract class Element {
                 // Temperature transference
                 if (HeatFactor > 0.0 || OnFire) {
                     if (OnFire && e.Flammable && RNG.Chance(1)) e.OnFire = true;
-                    float amount = OnFire ? Math.Max(HeatFactor, 1.0f) : HeatFactor;
-                    e.ChangeTemp(matrix, amount);
-                    if (e.CoolFactor > 0.0)
-                        ChangeTemp(matrix, -e.CoolFactor);
+                    float heat_power = HeatFactor * (RNG.Range(0, 15) * 1.0f);
+                    heat_power = OnFire ? Math.Max(heat_power, 1.0f) : heat_power;
+                    e.ChangeTemp(matrix, heat_power);
+                } else if (CoolFactor > 0.0) {
+                    float cool_power = -CoolFactor * (RNG.Range(0, 15) * 0.1f);
+                    e.ChangeTemp(matrix, cool_power);
                 }
 
-                if (CoolFactor > 0.0) {
-                    e.ChangeTemp(matrix, -CoolFactor);
-                    if (e.HeatFactor > 0.0) {
-                        float amount = e.OnFire ? 2.0f : e.HeatFactor;
-                        ChangeTemp(matrix, amount);
-                    }
-                }
+                // // Receive temp changes
+                // if (e.HeatFactor > 0.0) {
+                //     if (e.OnFire && Flammable && RNG.Chance(1)) OnFire = true;
+                //     float amount = e.OnFire ? Math.Max(HeatFactor, 1.0f) : HeatFactor;
+                //     ChangeTemp(matrix, amount);
+                // } else if (e.CoolFactor > 0.0)
+                //     ChangeTemp(matrix, -e.CoolFactor);
             }
         }
     }
@@ -131,9 +135,11 @@ abstract class Element {
         if (ActiveTemp > IdleTemp) ActiveTemp -= 0.5f;
         if (ActiveTemp < IdleTemp) ActiveTemp += 0.5f;
 
-        if (ActiveTemp >= 100.0f)
+        ActiveTemp = Math.Clamp(ActiveTemp, 0.0f, 100.0f);
+
+        if (ActiveTemp == 100.0f)
             HeatReaction(matrix);
-        else if (ActiveTemp <= 0.0f)
+        else if (ActiveTemp == 0.0f)
             CoolReaction(matrix);
     }
 

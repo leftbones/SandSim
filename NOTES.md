@@ -8,7 +8,7 @@
   * Same applies to cooling (Water touching Iron heated by Fire cools the Iron)
 * The RNG methods I'm using are all over the place, I should probably commit to just using RNG.Roll and remove all instances of RNG.Chance (RNG.Odds is okay for specific odds)
 * Might be a good idea to replace all the instances where I create a new Vector2 list for movement directions with a List<Vector2> property on element that I can just overwrite, to save from having to create new lists every step
-
+* Separate Density into different properties for Liquid and Gas so they can't interact in any way
 
 ## Density Explained
 "Density" is a scientific term that I'm using in a completely wrong way to determine how liquids and gasses interact with other liquids and gasses.

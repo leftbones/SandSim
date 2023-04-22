@@ -5,9 +5,10 @@ namespace SharpSand;
 
 
 class Lava : Liquid {
-    public Lava(Vector2 position) : base(position) {
+    public Lava(Vector2i position) : base(position) {
         Spread = 2.0f;
-        HeatFactor = 10.0f;
+        Density = 101.0f;
+        HeatFactor = 3.0f;
         BaseColor = Effect.DarkenColor(Effect.GetFireColor(), 50);
         Color = BaseColor;
     }

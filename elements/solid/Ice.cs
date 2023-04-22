@@ -4,8 +4,8 @@ using Raylib_cs;
 namespace SharpSand;
 
 class Ice : Solid {
-    public Ice(Vector2 position) : base(position) {
-        CoolFactor = 0.5f;
+    public Ice(Vector2i position) : base(position) {
+        CoolFactor = 2.0f;
         ActDirections = Direction.Diagonal;
         ForceAct = true;
         ColorOffset = 15;

@@ -4,7 +4,7 @@ using Raylib_cs;
 namespace SharpSand;
 
 class Water : Liquid {
-    public Water(Vector2 position) : base(position) {
+    public Water(Vector2i position) : base(position) {
         Spread = 10.0f;
         CoolFactor = 0.5f;
         ColorOffset = 0;
@@ -22,6 +22,7 @@ class Water : Liquid {
     }
 
     public override void CoolReaction(Matrix matrix) {
-        matrix.Set(Position, new Ice(Position));
+        if (RNG.Chance(1))
+            matrix.Set(Position, new Ice(Position));
     }
 }

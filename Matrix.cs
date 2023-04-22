@@ -6,7 +6,7 @@ namespace SharpSand;
 class Matrix {
     public Vector2i ScreenSize { get; private set; }
     public int Scale { get; private set; }
-    public Vector2i Size { get { return new Vector2i(ScreenSize.X / Scale, ScreenSize.Y / Scale); } }
+    public Vector2i Size { get; private set; }
     public Element[,] Elements { get; private set; }
 
     public int Tick { get; private set; }
@@ -24,6 +24,8 @@ class Matrix {
         Scale = scale;
         Tick = 0;
 
+		Size = new Vector2i(ScreenSize.X / Scale, ScreenSize.Y / Scale);
+
         // Create chunks
         Chunks = new Chunk[ScreenSize.X / ChunkSize, ScreenSize.Y / ChunkSize];
         for (int x = 0; x < ScreenSize.X / ChunkSize; x++) {
@@ -37,7 +39,7 @@ class Matrix {
         Elements = new Element[Size.X, Size.Y];
         for (int x = 0; x < Size.X; x++) {
             for (int y = 0; y < Size.Y; y++) {
-                Elements[x, y] = new Air(new Vector2(x, y));
+                Elements[x, y] = new Air(new Vector2i(x, y));
             }
         }
     }
@@ -50,10 +52,11 @@ class Matrix {
                     if (Tick % 2 == 0) {
                         for (int y = Chunk.Position.Y + Chunk.Size - 1; y >= Chunk.Position.Y; y--) {
                             for (int x = Chunk.Position.X; x < Chunk.Position.X + Chunk.Size; x++) {
-                                Element e = Get(new Vector2(x / Scale, y / Scale));
+								Element e = Get(new Vector2i(x / Scale, y / Scale));
                                 if (e is not Air && !e.AlreadyStepped) {
                                     e.LastPosition = e.Position;
                                     e.Step(this);
+                                    e.AlreadyStepped = true;
                                     e.Tick(this);
                                 }
                             }
@@ -61,10 +64,11 @@ class Matrix {
                     } else {
                         for (int y = Chunk.Position.Y + Chunk.Size - 1; y >= Chunk.Position.Y; y--) {
                             for (int x = Chunk.Position.X + Chunk.Size - 1; x >= Chunk.Position.X; x--) {
-                                Element e = Get(new Vector2(x / Scale, y / Scale));
+                                Element e = Get(new Vector2i(x / Scale, y / Scale));
                                 if (e is not Air && !e.AlreadyStepped) {
                                     e.LastPosition = e.Position;
                                     e.Step(this);
+                                    e.AlreadyStepped = true;
                                     e.Tick(this);
                                 }
                             }
@@ -96,19 +100,22 @@ class Matrix {
     }
 
     // Get a chunk from matrix coordinates
-    public Chunk GetChunk(Vector2 position) {
-        return Chunks[(int)Math.Floor((position.X / ChunkSize) * Scale), (int)Math.Floor((position.Y / ChunkSize) * Scale)];
+    public Chunk GetChunk(Vector2i position) {
+        return Chunks[
+            (int)Math.Floor(((float)position.X / ChunkSize) * Scale),
+            (int)Math.Floor(((float)position.Y / ChunkSize) * Scale)
+        ];
     }
 
     // Get an element from the matrix
-    public Element Get(Vector2 position) {
-        return Elements[(int)position.X, (int)position.Y];
+    public Element Get(Vector2i position) {
+        return Elements[position.X, position.Y];
     }
 
     // Set an element in the matrix (and update the element's position)
-    public bool Set(Vector2 position, Element element) {
+    public bool Set(Vector2i position, Element element) {
         if (InBounds(position)) {
-            Elements[(int)position.X, (int)position.Y] = element;
+            Elements[position.X, position.Y] = element;
             element.Position = position;
             element.LastDirection = Direction.GetMovementDirection(element.LastPosition, element.Position);
             WakeChunk(element);
@@ -118,34 +125,33 @@ class Matrix {
     }
 
     // Set an element in the matrix without checking if the position is in bounds
-    // public bool FastSet(Vector2 position, Element element) {
-    //     Elements[(int)position.X, (int)position.Y] = element;
+    // public bool FastSet(Vector2i position, Element element) {
+    //     Elements[position.X, position.Y] = element;
     //     WakeChunk(element);
     //     return true;
     // }
 
     // Swap the position of two elements in the matrix if the destination is in bounds
-    public bool Swap(Vector2 pos1, Vector2 pos2) {
+    public bool Swap(Vector2i pos1, Vector2i pos2) {
         if (InBounds(pos2)) {
             Element e1 = Get(pos1);
             Element e2 = Get(pos2);
             Set(pos2, e1);
             Set(pos1, e2);
-            WakeChunk(e1);
-            WakeChunk(e2);
-            e1.AlreadyStepped = true;
+            // WakeChunk(e1);
+            // WakeChunk(e2);
             return true;
         } else if (DestroyOutOfBounds) {
             Element air = new Air(pos1);
             Set(pos1, air);
-            WakeChunk(air);
+            // WakeChunk(air);
             return true;
         }
         return false;
     }
 
     // Swap the position of two elements in the matrix if the second is empty
-    public bool SwapIfEmpty(Vector2 pos1, Vector2 pos2) {
+    public bool SwapIfEmpty(Vector2i pos1, Vector2i pos2) {
         if (!InBounds(pos2)) {
             if (DestroyOutOfBounds) {
                 Set(pos1, new Air(pos1));
@@ -160,7 +166,7 @@ class Matrix {
     }
 
     // Swap the position of two elements if the element at pos2 matches the specified type
-    public bool SwapIfType(Vector2 pos1, Vector2 pos2, ElementType type) {
+    public bool SwapIfType(Vector2i pos1, Vector2i pos2, ElementType type) {
         if (InBounds(pos2)) {
             Element e = Get(pos2);
             if (e.Type == type)
@@ -169,14 +175,14 @@ class Matrix {
         } else if (DestroyOutOfBounds) {
             Element air = new Air(pos1);
             Set(pos1, air);
-            WakeChunk(air);
+            // WakeChunk(air);
             return true;
         }
         return false;
     }
 
     // Swap the position of two elements if the element at pos2 matches the specified type or pos2 is empty (contains air)
-    public bool SwapIfTypeOrEmpty(Vector2 pos1, Vector2 pos2, ElementType type) {
+    public bool SwapIfTypeOrEmpty(Vector2i pos1, Vector2i pos2, ElementType type) {
         if (InBounds(pos2)) {
             Element e = Get(pos2);
             if (e.Type == type || e is Air)
@@ -185,14 +191,14 @@ class Matrix {
         } else if (DestroyOutOfBounds) {
             Element air = new Air(pos1);
             Set(pos1, air);
-            WakeChunk(air);
+            // WakeChunk(air);
             return true;
         }
         return false;
     }
 
     // Swap the position of two elements if the element at pos1 is less dense than the element at pos2 (Liquid/Gas only)
-    public bool SwapIfLessDense(Vector2 pos1, Vector2 pos2) {
+    public bool SwapIfLessDense(Vector2i pos1, Vector2i pos2) {
         List<ElementType> ValidTypes = new List<ElementType>() { ElementType.Liquid, ElementType.Gas };
         if (InBounds(pos2)) {
             Element e1 = Get(pos1);
@@ -206,14 +212,14 @@ class Matrix {
         } else if (DestroyOutOfBounds) {
             Element air = new Air(pos1);
             Set(pos1, air);
-            WakeChunk(air);
+            // WakeChunk(air);
             return true;
         }
         return false;
     }
 
     // Swap the position of two elements if the element at pos1 is more dense than the element at pos2 (Liquid/Gas only)
-    public bool SwapIfMoreDense(Vector2 pos1, Vector2 pos2) {
+    public bool SwapIfMoreDense(Vector2i pos1, Vector2i pos2) {
         List<ElementType> ValidTypes = new List<ElementType>() { ElementType.Liquid, ElementType.Gas };
         if (InBounds(pos2)) {
             Element e1 = Get(pos1);
@@ -230,26 +236,26 @@ class Matrix {
         } else if (DestroyOutOfBounds) {
             Element air = new Air(pos1);
             Set(pos1, air);
-            WakeChunk(air);
+            // WakeChunk(air);
             return true;
         }
         return false;
     }
 
     // Check if a position is in bounds
-    public bool InBounds(Vector2 position) {
-        return (int)position.X >= 0 && (int)position.X < Size.X && (int)position.Y >= 0 && (int)position.Y < Size.Y;
+    public bool InBounds(Vector2i position) {
+        return position.X >= 0 && position.X < Size.X && position.Y >= 0 && position.Y < Size.Y;
     }
 
     // Check if a position is empty (contains air) and in bounds
-    public bool IsEmpty(Vector2 position) {
+    public bool IsEmpty(Vector2i position) {
         if (InBounds(position))
             return Get(position) is Air;
         return false;
     }
 
     // Check if a position is in bounds and empty
-    public bool InBoundsAndEmpty(Vector2 position) {
+    public bool InBoundsAndEmpty(Vector2i position) {
         if (InBounds(position)) {
             if (Get(position) is Air)
                 return true;
@@ -259,7 +265,7 @@ class Matrix {
     }
 
     // Check if a position contains a type or is empty
-    public bool IsTypeOrEmpty(Vector2 position, ElementType type) {
+    public bool IsTypeOrEmpty(Vector2i position, ElementType type) {
         if (InBounds(position)) {
             Element e = Get(position);
             return e is Air || e.Type == type;
@@ -268,36 +274,36 @@ class Matrix {
     }
 
     // Check if a position contains a solid
-    public bool IsSolid(Vector2 position) {
+    public bool IsSolid(Vector2i position) {
         if (InBounds(position))
             return Get(position).Type == ElementType.Solid;
         return false;
     }
 
     // Check if a position contains a solid
-    public bool IsLiquid(Vector2 position) {
+    public bool IsLiquid(Vector2i position) {
         if (InBounds(position))
             return Get(position).Type == ElementType.Liquid;
         return false;
     }
 
     // Check if a position contains a solid
-    public bool IsGas(Vector2 position) {
+    public bool IsGas(Vector2i position) {
         if (InBounds(position))
             return Get(position).Type == ElementType.Gas;
         return false;
     }
 
     // Check if a position contains a solid
-    public bool IsPowder(Vector2 position) {
+    public bool IsPowder(Vector2i position) {
         if (InBounds(position))
             return Get(position).Type == ElementType.Powder;
         return false;
     }
 
     // Check if an element is surrounded (has no valid moves)
-    public bool Surrounded(Vector2 position) {
-        foreach (Vector2 Dir in Direction.Full) {
+    public bool Surrounded(Vector2i position) {
+        foreach (Vector2i Dir in Direction.Full) {
             if (IsEmpty(position + Dir))
                 return false;
         }
@@ -305,9 +311,9 @@ class Matrix {
     }
 
     // Return a list of the elements surrounding a position
-    public List<Element> GetNeighbors(Vector2 position) {
+    public List<Element> GetNeighbors(Vector2i position) {
         List<Element> Neighbors = new List<Element>();
-        foreach (Vector2 Dir in Direction.Full) {
+        foreach (Vector2i Dir in Direction.Full) {
             if (InBounds(position + Dir)) {
                 if (!IsEmpty(position + Dir))
                     Neighbors.Add(Get(position + Dir));
@@ -321,7 +327,7 @@ class Matrix {
         Elements = new Element[Size.X, Size.Y];
         for (int x = 0; x < Size.X; x++) {
             for (int y = 0; y < Size.Y; y++) {
-                Elements[x, y] = new Air(new Vector2(x, y));
+                Elements[x, y] = new Air(new Vector2i(x, y));
             }
         }
     }
