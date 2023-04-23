@@ -1,5 +1,11 @@
 # SharpSand Notes
 
+## Priority List
+* Work out a way to allow settled elements to still process and react to temp changes without attempting movement
+* Change "Flammable" bool to "Flammability" float modifier to be used when rolling to spread fire between elements
+* Clean up directory structure! Holy shit this is a MESS.
+* Add some sort of "Game" or "Simulation" class to control Matrix, DrawingTools, Theme, etc. all in one place.
+
 ## Eventually List
 * Gasses are currently unable to become settled because there are too many factors that determine if they should unsettle, this might not be a problem at all
 * Work out a way to transfer temperature between elements

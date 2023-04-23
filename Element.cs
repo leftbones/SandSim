@@ -18,7 +18,7 @@ abstract class Element {
     // Tracking
     public int Lifetime { get; set; } = -1;                 // How long the element will live (in ticks), -1 is no limit
     public int TicksLived { get; set; } = 0;                // How many ticks the element has already lived
-    public float Health { get; set; } = 500;                // Current health of the element, hitting 0 triggers the Expire method
+    public float Health { get; set; } = 100;                // Current health of the element, hitting 0 triggers the Expire method
     public bool AlreadyStepped { get; set; } = false;       // If the element has already run it's step method once in the current update loop
 
     ////
@@ -36,7 +36,7 @@ abstract class Element {
     public float HeatFactor { get; set; } = 0.0f;           // How much heating the element gives off
     public float CoolFactor { get; set; } = 0.0f;           // How much cooling the element gives off
 
-    public bool Flammable { get; set; } = false;            // If the element can be set on fire
+    public float Flammability { get; set; } = 0.0f;            // If the element can be set on fire
     public float BurnDamageModifier { get; set; } = 1.0f;   // How resistant the element is to damage from fire (doesn't affect flammability)
 
     ////
@@ -108,7 +108,7 @@ abstract class Element {
 
                 // Temperature transference
                 if (HeatFactor > 0.0 || OnFire) {
-                    if (OnFire && e.Flammable && RNG.Chance(1)) e.OnFire = true;
+                    if (OnFire && e.Flammability > 0.0f && RNG.Roll(e.Flammability)) e.OnFire = true;
                     float heat_power = HeatFactor * (RNG.Range(0, 15) * 1.0f);
                     heat_power = OnFire ? Math.Max(heat_power, 1.0f) : heat_power;
                     e.ChangeTemp(matrix, heat_power);
@@ -116,14 +116,6 @@ abstract class Element {
                     float cool_power = -CoolFactor * (RNG.Range(0, 15) * 0.1f);
                     e.ChangeTemp(matrix, cool_power);
                 }
-
-                // // Receive temp changes
-                // if (e.HeatFactor > 0.0) {
-                //     if (e.OnFire && Flammable && RNG.Chance(1)) OnFire = true;
-                //     float amount = e.OnFire ? Math.Max(HeatFactor, 1.0f) : HeatFactor;
-                //     ChangeTemp(matrix, amount);
-                // } else if (e.CoolFactor > 0.0)
-                //     ChangeTemp(matrix, -e.CoolFactor);
             }
         }
     }

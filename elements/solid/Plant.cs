@@ -7,9 +7,8 @@ class Plant : Solid {
     public float GrowthChance = 0.08f;
 
     public Plant(Vector2i position) : base(position) {
-        Health = 250;
-        Flammable = true;
-        BurnDamageModifier = 2.0f;
+        Flammability = 0.01f;
+        // BurnDamageModifier = 2.0f;
         ActDirections = Direction.Cardinal;
         ForceAct = true;
         BaseColor = new Color(7, 197, 102, 255);
@@ -18,7 +17,7 @@ class Plant : Solid {
 
     public override void ActOnOther(Matrix matrix, Element other) {
         // Attempt to spread to neighboring water
-        if (other is Water) {
+        if (other.GetType() == typeof(Water)) {
             if (!OnFire && RNG.Roll(GrowthChance))
                 matrix.Set(other.Position, new Plant(other.Position));
         }

@@ -10,7 +10,7 @@ abstract class Liquid : Element {
     }
 
     public override void Step(Matrix matrix) {
-        // Unsettle if down/left/right space is empty
+        // Unsettle if down/left/right space is empty or contains a gas
         if (Settled) {
 			foreach (Vector2i Dir in Direction.LowerHalf)
 				if (matrix.IsTypeOrEmpty(Position + Dir, ElementType.Gas))

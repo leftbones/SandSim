@@ -273,6 +273,16 @@ class Matrix {
         return false;
     }
 
+    // Check if a position contains a less dense element
+    public bool IsLessDense(Vector2i pos1, Vector2i pos2) {
+        if (InBounds(pos2)) {
+            Element e1 = Get(pos1);
+            Element e2 = Get(pos2);
+            return e1.Density > e2.Density;
+        }
+        return false;
+    }
+
     // Check if a position contains a solid
     public bool IsSolid(Vector2i position) {
         if (InBounds(position))
