@@ -155,7 +155,8 @@ class Program {
             ImageClearBackground(ref BufferImage, DrawingTools.Theme.BackgroundColor);
 
             foreach (Element e in Matrix.Elements) {
-                if (e is not Air) {
+                // if (e is not Air) {
+                if (e.GetType() != typeof(Air)) {
                     Color c = e.Color;
                     ImageDrawPixel(ref BufferImage, e.Position.X, e.Position.Y, c);
                     e.AlreadyStepped = false;

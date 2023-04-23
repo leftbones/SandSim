@@ -53,7 +53,7 @@ class Matrix {
                         for (int y = Chunk.Position.Y + Chunk.Size - 1; y >= Chunk.Position.Y; y--) {
                             for (int x = Chunk.Position.X; x < Chunk.Position.X + Chunk.Size; x++) {
 								Element e = Get(new Vector2i(x / Scale, y / Scale));
-                                if (e is not Air && !e.AlreadyStepped) {
+                                if (e.GetType() != typeof(Air) && !e.AlreadyStepped) {
                                     e.LastPosition = e.Position;
                                     e.Step(this);
                                     e.AlreadyStepped = true;
@@ -65,7 +65,7 @@ class Matrix {
                         for (int y = Chunk.Position.Y + Chunk.Size - 1; y >= Chunk.Position.Y; y--) {
                             for (int x = Chunk.Position.X + Chunk.Size - 1; x >= Chunk.Position.X; x--) {
                                 Element e = Get(new Vector2i(x / Scale, y / Scale));
-                                if (e is not Air && !e.AlreadyStepped) {
+                                if (e.GetType() != typeof(Air) && !e.AlreadyStepped) {
                                     e.LastPosition = e.Position;
                                     e.Step(this);
                                     e.AlreadyStepped = true;
@@ -185,7 +185,7 @@ class Matrix {
     public bool SwapIfTypeOrEmpty(Vector2i pos1, Vector2i pos2, ElementType type) {
         if (InBounds(pos2)) {
             Element e = Get(pos2);
-            if (e.Type == type || e is Air)
+            if (e.Type == type || e.GetType() == typeof(Air))
                 return Swap(pos1, pos2);
             return false;
         } else if (DestroyOutOfBounds) {
@@ -225,7 +225,7 @@ class Matrix {
             Element e1 = Get(pos1);
             Element e2 = Get(pos2);
 
-            if (e2 is Air)
+            if (e2.GetType() == typeof(Air))
                 return false;
 
             if (!ValidTypes.Contains(e1.Type) || !ValidTypes.Contains(e2.Type))
@@ -250,14 +250,14 @@ class Matrix {
     // Check if a position is empty (contains air) and in bounds
     public bool IsEmpty(Vector2i position) {
         if (InBounds(position))
-            return Get(position) is Air;
+            return Get(position).GetType() == typeof(Air);
         return false;
     }
 
     // Check if a position is in bounds and empty
     public bool InBoundsAndEmpty(Vector2i position) {
         if (InBounds(position)) {
-            if (Get(position) is Air)
+            if (Get(position).GetType() == typeof(Air))
                 return true;
             return false;
         }
@@ -268,7 +268,7 @@ class Matrix {
     public bool IsTypeOrEmpty(Vector2i position, ElementType type) {
         if (InBounds(position)) {
             Element e = Get(position);
-            return e is Air || e.Type == type;
+            return e.Type == type || e.GetType() == typeof(Air);
         }
         return false;
     }
