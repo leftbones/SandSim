@@ -103,6 +103,9 @@ abstract class Element {
             if (matrix.InBounds(Position + Dir)) {
                 Element e = matrix.Get(Position + Dir);
 
+                if (e.GetType() == typeof(Air))
+                    continue;
+
                 UnsettleOther(e);
                 ActOnOther(matrix, e);
 

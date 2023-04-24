@@ -6,7 +6,7 @@ namespace SharpSand;
 
 
 class DrawingTools {
-    private string[] ElementNames = new string[] { "Sand", "Dirt", "Snow", "Water", "Oil", "Lava", "Fire", "Ice", "Plant", "Concrete", "Ember", "Soot", "Smoke", "Steam" };
+    private string[] ElementNames = new string[] { "Sand", "Dirt", "Snow", "Nanobots", "Water", "Oil", "Lava", "Fire", "Ice", "Plant", "Concrete", "Ember", "Soot", "Smoke", "Steam" };
     private List<Texture2D> ElementTextures = new List<Texture2D>();
     private int ElementIndex = 0;
 

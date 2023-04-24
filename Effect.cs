@@ -14,6 +14,11 @@ public static class Effect {
         return FireColors[RNG.Random.Next(0, FireColors.Length)];
     }
 
+    public static Color GetNanobotsColor() {
+        int n = RNG.Range(20, 220);
+        return new Color(n, n, n, 255);
+    }
+
     public static Color GetRandomColor() {
         return new Color(
             RNG.Range(25, 255),
