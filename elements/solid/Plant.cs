@@ -4,28 +4,47 @@ using Raylib_cs;
 namespace SharpSand;
 
 class Plant : Solid {
-    public float GrowthChance = 0.08f;
+    private float GrowthChance = 0.08f;
+    private bool CanGrow = true;
+    private bool Acted = false;
 
     public Plant(Vector2i position) : base(position) {
         Flammability = 0.01f;
-        // BurnDamageModifier = 2.0f;
-        ActDirections = Direction.Cardinal;
+        ActDirections = Direction.ShuffledCardinal;
         ForceAct = true;
         BaseColor = new Color(7, 197, 102, 255);
         ModifyColor();
     }
 
+    public override void Step(Matrix matrix) {
+        Acted = false;
+        base.Step(matrix);
+    }
+
     public override void ActOnOther(Matrix matrix, Element other) {
-        // Attempt to spread to neighboring water
+        // Already acted this step
+        if (Acted)
+            return;
+
+        // Attempt to spread to or absorb neighboring water
         if (other.GetType() == typeof(Water)) {
-            if (!OnFire && RNG.Roll(GrowthChance))
-                matrix.Set(other.Position, new Plant(other.Position));
+            if (!OnFire && RNG.Roll(GrowthChance)) {
+                if (CanGrow) {
+                    matrix.Set(other.Position, new Plant(other.Position));
+                    CanGrow = false;
+                } else {
+                    if (RNG.Roll(GrowthChance))
+                        matrix.Set(other.Position, new Air(other.Position));
+                    CanGrow = true;
+                }
+            } else {
+                Acted = true;
+            }
         }
     }
 
     public override void HeatReaction(Matrix matrix) {
-        if (!OnFire)
-            OnFire = true;
+        OnFire = true;
     }
 
     public override void Expire(Matrix matrix) {

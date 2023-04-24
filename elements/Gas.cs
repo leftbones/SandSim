@@ -16,8 +16,8 @@ abstract class Gas : Element {
             return;
 
         // Move upward if the space above contains a denser gas
-        // if (matrix.SwapIfMoreDense(Position, Position + Direction.Up))
-        //     return;
+        if (matrix.SwapIfLessDense(Position, Position + Direction.Up))
+            return;
 
         // Chance to not move at all
         if (RNG.Chance(25))

@@ -46,24 +46,15 @@ class Matrix {
 
     // Update all non-air elements in the matrix
     public void Update() {
+        bool IsEvenTick = Tick % 2 == 0;
         if (Active) {
-            foreach (Chunk Chunk in Chunks) {
-                if (Chunk.Awake) {
-                    if (Tick % 2 == 0) {
+            for (int cy = ScreenSize.Y / ChunkSize - 1; cy >= 0; cy--) {
+                for (int cx = IsEvenTick ? 0 : ScreenSize.X / ChunkSize - 1; IsEvenTick ? cx < ScreenSize.X / ChunkSize : cx >= 0; cx += IsEvenTick ? 1 : -1) {
+                    var Chunk = Chunks[cx, cy];
+
+                    if (Chunk.Awake) {
                         for (int y = Chunk.Position.Y + Chunk.Size - 1; y >= Chunk.Position.Y; y--) {
-                            for (int x = Chunk.Position.X; x < Chunk.Position.X + Chunk.Size; x++) {
-								Element e = Get(new Vector2i(x / Scale, y / Scale));
-                                if (e.GetType() != typeof(Air) && !e.AlreadyStepped) {
-                                    e.LastPosition = e.Position;
-                                    e.Step(this);
-                                    e.AlreadyStepped = true;
-                                    e.Tick(this);
-                                }
-                            }
-                        }
-                    } else {
-                        for (int y = Chunk.Position.Y + Chunk.Size - 1; y >= Chunk.Position.Y; y--) {
-                            for (int x = Chunk.Position.X + Chunk.Size - 1; x >= Chunk.Position.X; x--) {
+                            for (int x = IsEvenTick ? 0 : Chunk.Position.X + Chunk.Size - 1; IsEvenTick ? x < Chunk.Position.X + ChunkSize : x >= Chunk.Position.X; x += IsEvenTick ? 1 : -1) {
                                 Element e = Get(new Vector2i(x / Scale, y / Scale));
                                 if (e.GetType() != typeof(Air) && !e.AlreadyStepped) {
                                     e.LastPosition = e.Position;
@@ -74,9 +65,9 @@ class Matrix {
                             }
                         }
                     }
-                }
 
-                Chunk.Update();
+                    Chunk.Update();
+                }
             }
 
             Tick++;

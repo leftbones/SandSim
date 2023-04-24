@@ -24,6 +24,15 @@ class Ember : Powder {
         base.Step(matrix);
     }
 
+    public override void ActOnOther(Matrix matrix, Element element) {
+        if (RNG.CoinFlip() && element.GetType() == typeof(Water)) {
+            Expire(matrix);
+            return;
+        }
+
+        base.ActOnOther(matrix, element);
+    }
+
     public override void CoolReaction(Matrix matrix) {
         if (RNG.Chance(25))
             matrix.Set(Position, new Soot(Position));

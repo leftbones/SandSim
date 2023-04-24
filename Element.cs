@@ -36,13 +36,13 @@ abstract class Element {
     public float HeatFactor { get; set; } = 0.0f;           // How much heating the element gives off
     public float CoolFactor { get; set; } = 0.0f;           // How much cooling the element gives off
 
-    public float Flammability { get; set; } = 0.0f;            // If the element can be set on fire
+    public float Flammability { get; set; } = 0.0f;         // How likely the element is to be set on fire
     public float BurnDamageModifier { get; set; } = 1.0f;   // How resistant the element is to damage from fire (doesn't affect flammability)
 
     ////
     // Interaction
     public bool ForceAct { get; set; } = false;                             // If the element should act on its neighbors (this step) regardless of if it is settled or not
-    public List<Vector2i> ActDirections { get; set; } = Direction.Full;      // The directions in which this element interacts with neighboring elements
+    public List<Vector2i> ActDirections { get; set; } = Direction.ShuffledFull;      // The directions in which this element interacts with neighboring elements
 
     ////
     // Status
