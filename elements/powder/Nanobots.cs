@@ -4,7 +4,8 @@ using Raylib_cs;
 namespace SharpSand;
 
 class Nanobots : Powder {
-    private bool Duplicated = false;
+    private bool Dormant = false;
+    private float Chance = 0.005f;
 
     public Nanobots(Vector2i position) : base(position) {
         Friction = 0.05f;
@@ -15,16 +16,19 @@ class Nanobots : Powder {
     }
 
     public override void Step(Matrix matrix) {
-        if (RNG.Chance(2))
+        if (RNG.Roll(Chance))
+            Dormant = true;
+
+        if (!Dormant && RNG.Chance(2)) {
             Color = Effect.GetNanobotsColor();
+        }
 
         base.Step(matrix);
     }
 
     public override void ActOnOther(Matrix matrix, Element other) {
-        if (!Duplicated && RNG.Roll(0.005f) && other.GetType() != typeof(Nanobots)) {
+        if (!Dormant && RNG.Roll(Chance) && other.GetType() != typeof(Nanobots)) {
             matrix.Set(other.Position, new Nanobots(other.Position));
-            Duplicated = true;
         }
     }
 }

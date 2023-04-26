@@ -8,6 +8,7 @@ class Smoke : Gas {
     public Smoke(Vector2i position) : base(position) {
         Lifetime = 750;
         Density = -0.3f;
+        Drift = 0.4f;
         BaseColor = new Color(132, 136, 132, 150);
         ModifyColor();
     }

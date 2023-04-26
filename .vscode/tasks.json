@@ -16,12 +16,14 @@
         {
             "label": "publish",
             "command": "dotnet",
-            "type": "process",
+            "type": "shell",
             "args": [
                 "publish",
-                "${workspaceFolder}/SharpSand.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "-c", "release",
+                "--runtime", "win-x64",
+                "-p:PublishSingleFile=true",
+                "-p:PublishTrimmed=false",
+                "--self-contained", "true"
             ],
             "problemMatcher": "$msCompile"
         },

@@ -8,9 +8,18 @@ abstract class Gas : Element {
     public Gas(Vector2i position) : base(position) {
         Type = ElementType.Gas;
         Spread = 3.0f;
+        Drift = 0.2f;
     }
 
     public override void Step(Matrix matrix) {
+        // Chance to move horizontally based on Drift
+        foreach (Vector2i DriftDir in Direction.ShuffledHorizontal) {
+            if (RNG.Roll(Drift)) {
+                if (matrix.SwapIfEmpty(Position, Position + DriftDir))
+                    return;
+            }
+        }
+
         // Move upward if the space above contains liquid (regardless of density)
         if (matrix.SwapIfType(Position, Position + Direction.Up, ElementType.Liquid))
             return;
