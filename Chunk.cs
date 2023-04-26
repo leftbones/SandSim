@@ -7,7 +7,7 @@ namespace SharpSand;
 class Chunk {
     public Vector2i Position { get; private set; }
     public int Size { get; private set; }
-    public bool Awake { get; private set; } = true;
+    public bool Awake { get; set; } = true;
     public bool WakeNextStep { get; set; } = false;
 
     public Chunk(Vector2i position, int size) {

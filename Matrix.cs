@@ -15,8 +15,10 @@ class Matrix {
     public bool Active = true;
     public bool StepTick = false;
 
+    public bool UseChunks { get; set; } = false;
     public Chunk[,] Chunks { get; private set; }
     private int ChunkSize = 80;
+
 
 
     public Matrix(Vector2i screen_size, int scale) {
@@ -48,25 +50,46 @@ class Matrix {
     public void Update() {
         bool IsEvenTick = Tick % 2 == 0;
         if (Active) {
-            for (int cy = ScreenSize.Y / ChunkSize - 1; cy >= 0; cy--) {
-                for (int cx = IsEvenTick ? 0 : ScreenSize.X / ChunkSize - 1; IsEvenTick ? cx < ScreenSize.X / ChunkSize : cx >= 0; cx += IsEvenTick ? 1 : -1) {
-                    var Chunk = Chunks[cx, cy];
 
-                    if (Chunk.Awake) {
-                        for (int y = Chunk.Position.Y + Chunk.Size - 1; y >= Chunk.Position.Y; y--) {
-                            for (int x = IsEvenTick ? 0 : Chunk.Position.X + Chunk.Size - 1; IsEvenTick ? x < Chunk.Position.X + ChunkSize : x >= Chunk.Position.X; x += IsEvenTick ? 1 : -1) {
-                                Element e = Get(new Vector2i(x / Scale, y / Scale));
-                                if (e.GetType() != typeof(Air) && !e.AlreadyStepped) {
-                                    e.LastPosition = e.Position;
-                                    e.Step(this);
-                                    e.AlreadyStepped = true;
-                                    e.Tick(this);
+            ////
+            // Active Chunks Only
+            if (UseChunks) {
+                for (int cy = ScreenSize.Y / ChunkSize - 1; cy >= 0; cy--) {
+                    for (int cx = IsEvenTick ? 0 : ScreenSize.X / ChunkSize - 1; IsEvenTick ? cx < ScreenSize.X / ChunkSize : cx >= 0; cx += IsEvenTick ? 1 : -1) {
+                        var Chunk = Chunks[cx, cy];
+
+                        if (Chunk.Awake) {
+                            for (int y = Chunk.Position.Y + Chunk.Size - 1; y >= Chunk.Position.Y; y--) {
+                                for (int x = IsEvenTick ? 0 : Chunk.Position.X + Chunk.Size - 1; IsEvenTick ? x < Chunk.Position.X + ChunkSize : x >= Chunk.Position.X; x += IsEvenTick ? 1 : -1) {
+                                    Element e = Get(new Vector2i(x / Scale, y / Scale));
+                                    if (e.GetType() != typeof(Air) && !e.AlreadyStepped) {
+                                        e.LastPosition = e.Position;
+                                        e.Step(this);
+                                        e.AlreadyStepped = true;
+                                        e.Tick(this);
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    Chunk.Update();
+                        Chunk.Update();
+                    }
+                }
+            }
+
+            ////
+            // Entire Matrix
+            else {
+                for (int y = Size.Y - 1; y >= 0; y--) {
+                    for (int x = IsEvenTick ? 0 : Size.X - 1; IsEvenTick ? x < Size.X : x >= 0; x += IsEvenTick ? 1 : -1) {
+                        Element e = Get(new Vector2i(x, y));
+                        if (e.GetType() != typeof(Air) && !e.AlreadyStepped) {
+                            e.LastPosition = e.Position;
+                            e.Step(this);
+                            e.AlreadyStepped = true;
+                            e.Tick(this);
+                        }
+                    }
                 }
             }
 
@@ -81,6 +104,9 @@ class Matrix {
 
     // Wake the chunk containing an element
     public void WakeChunk(Element e) {
+        if (!UseChunks)
+            return;
+
         Chunk c = GetChunk(e.Position);
         c.WakeNextStep = true;
 
@@ -88,6 +114,11 @@ class Matrix {
         if (InBounds(e.Position + Direction.Up) && e.Position.Y == c.Position.Y / Scale) GetChunk(e.Position + Direction.Up).WakeNextStep = true;
         if (InBounds(e.Position + Direction.Right) && e.Position.X >= (c.Position.X / Scale) + (c.Size / Scale) - 1) GetChunk(e.Position + Direction.Right).WakeNextStep = true;
         if (InBounds(e.Position + Direction.Down) && e.Position.Y >= (c.Position.Y / Scale) + (c.Size / Scale) - 1) GetChunk(e.Position + Direction.Down).WakeNextStep = true;
+
+        // if (InBounds(e.Position + (Direction.Left * 2)) && e.Position.X - 1 == c.Position.X / Scale) GetChunk(new Vector2i(e.Position.X - 1, e.Position.Y) + Direction.Left).WakeNextStep = true;
+        // if (InBounds(e.Position + (Direction.Up * 2)) && e.Position.Y - 1 == c.Position.Y / Scale) GetChunk(new Vector2i(e.Position.X, e.Position.Y - 1) + Direction.Up).WakeNextStep = true;
+        // if (InBounds(e.Position + (Direction.Right * 2)) && e.Position.X + 1 >= (c.Position.X / Scale) + (c.Size / Scale) - 1) GetChunk(new Vector2i(e.Position.X + 1, e.Position.Y) + Direction.Right).WakeNextStep = true;
+        // if (InBounds(e.Position + (Direction.Down * 2)) && e.Position.Y + 1 >= (c.Position.Y / Scale) + (c.Size / Scale) - 1) GetChunk(new Vector2i(e.Position.X, e.Position.Y + 1) + Direction.Down).WakeNextStep = true;
     }
 
     // Get a chunk from matrix coordinates
@@ -118,7 +149,6 @@ class Matrix {
     // Set an element in the matrix without checking if the position is in bounds
     // public bool FastSet(Vector2i position, Element element) {
     //     Elements[position.X, position.Y] = element;
-    //     WakeChunk(element);
     //     return true;
     // }
 
@@ -129,13 +159,10 @@ class Matrix {
             Element e2 = Get(pos2);
             Set(pos2, e1);
             Set(pos1, e2);
-            // WakeChunk(e1);
-            // WakeChunk(e2);
             return true;
         } else if (DestroyOutOfBounds) {
             Element air = new Air(pos1);
             Set(pos1, air);
-            // WakeChunk(air);
             return true;
         }
         return false;
@@ -166,7 +193,6 @@ class Matrix {
         } else if (DestroyOutOfBounds) {
             Element air = new Air(pos1);
             Set(pos1, air);
-            // WakeChunk(air);
             return true;
         }
         return false;
@@ -182,7 +208,6 @@ class Matrix {
         } else if (DestroyOutOfBounds) {
             Element air = new Air(pos1);
             Set(pos1, air);
-            // WakeChunk(air);
             return true;
         }
         return false;
@@ -203,7 +228,6 @@ class Matrix {
         } else if (DestroyOutOfBounds) {
             Element air = new Air(pos1);
             Set(pos1, air);
-            // WakeChunk(air);
             return true;
         }
         return false;
@@ -227,7 +251,6 @@ class Matrix {
         } else if (DestroyOutOfBounds) {
             Element air = new Air(pos1);
             Set(pos1, air);
-            // WakeChunk(air);
             return true;
         }
         return false;

@@ -42,7 +42,7 @@ class Program {
             "",
             "Hotkeys:",
             "<F2> Cycle simulation speed",
-            // "<F3> Toggle water spout", // Unused
+            "<F3> Toggle chunk processing (experimental)",
             "<F4> Toggle world borders",
             "<F5> Reset world",
             "<F6> Toggle weather",
@@ -60,6 +60,13 @@ class Program {
 
             if (IsKeyPressed(KeyboardKey.KEY_F2))
                 Settings.CycleSimulationSpeed();
+
+            if (IsKeyPressed(KeyboardKey.KEY_F3)) {
+                Matrix.UseChunks = !Matrix.UseChunks;
+                Console.WriteLine("[SYSTEM] Chunk processing set to " + Matrix.UseChunks.ToString().ToUpper());
+                foreach (Chunk C in Matrix.Chunks)
+                    C.Awake = false;
+            }
 
             if (IsKeyPressed(KeyboardKey.KEY_F4)) {
                 Matrix.DestroyOutOfBounds = !Matrix.DestroyOutOfBounds;
