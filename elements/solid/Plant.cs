@@ -22,20 +22,21 @@ class Plant : Solid {
     }
 
     public override void ActOnOther(Matrix matrix, Element other) {
+        // Can't grow anymore
+        if (!CanGrow)
+            return;
+
         // Already acted this step
         if (Acted)
             return;
 
-        // Attempt to spread to or absorb neighboring water
+        // Attempt to grow to nearby water
         if (other.GetType() == typeof(Water)) {
             if (!OnFire && RNG.Roll(GrowthChance)) {
                 if (CanGrow) {
                     matrix.Set(other.Position, new Plant(other.Position));
-                    CanGrow = false;
-                } else {
-                    if (RNG.Roll(GrowthChance))
-                        matrix.Set(other.Position, new Air(other.Position));
-                    CanGrow = true;
+                    if (RNG.Roll(GrowthChance / 2.0f))
+                        CanGrow = false;
                 }
             } else {
                 Acted = true;

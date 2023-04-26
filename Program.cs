@@ -12,8 +12,10 @@ class Program {
         Vector2i ScreenSize = new Vector2i(1280, 720);
         int Scale = 4;
 
+        Console.WriteLine(String.Format("[SYSTEM] Screen size is {0}x{1}, scale is {2}", ScreenSize.X, ScreenSize.Y, Scale));
+
         SetTraceLogLevel(LOG_WARNING | LOG_ERROR | LOG_FATAL);
-        InitWindow(ScreenSize.X, ScreenSize.Y, "Sand");
+        InitWindow(ScreenSize.X, ScreenSize.Y, "SandSim");
         SetTargetFPS(200);
 
         Console.WriteLine("[SYSTEM] Matrix initialized");
@@ -36,10 +38,10 @@ class Program {
             "<S> Previous element",
             "<O> Toggle 'Paint Over'",
             "<Space> Pause/Play simulation",
-            "<T> Advance one tick",
+            "<T> Advance one tick (while paused)",
             "",
             "Hotkeys:",
-            "<F2> Toggle FPS cap",
+            "<F2> Cycle simulation speed",
             // "<F3> Toggle water spout", // Unused
             "<F4> Toggle world borders",
             "<F5> Reset world",
@@ -56,34 +58,41 @@ class Program {
             if (IsKeyDown(KeyboardKey.KEY_F1)) Settings.DisplayHelpText = true;
             else Settings.DisplayHelpText = false;
 
-            if (IsKeyPressed(KeyboardKey.KEY_F2)) {
+            if (IsKeyPressed(KeyboardKey.KEY_F2))
                 Settings.CycleSimulationSpeed();
-            }
 
             if (IsKeyPressed(KeyboardKey.KEY_F4)) {
                 Matrix.DestroyOutOfBounds = !Matrix.DestroyOutOfBounds;
                 Matrix.UnsettleAll();
+                Console.WriteLine("[SYSTEM] Destroy out of bounds set to " + Matrix.DestroyOutOfBounds.ToString().ToUpper());
             }
 
-            if (IsKeyPressed(KeyboardKey.KEY_F5))
+            if (IsKeyPressed(KeyboardKey.KEY_F5)) {
                 Matrix.Reset();
+                Console.WriteLine("[SYSTEM] Simulation reset");
+            }
 
-            if (IsKeyPressed(KeyboardKey.KEY_F6))
+            if (IsKeyPressed(KeyboardKey.KEY_F6)) {
                 Settings.WeatherEnabled = !Settings.WeatherEnabled;
+                Console.WriteLine("[SYSTEM] Weather simulation set to " + Settings.WeatherEnabled.ToString().ToUpper());
+            }
 
-            if (IsKeyPressed(KeyboardKey.KEY_F7)) {
+            if (IsKeyPressed(KeyboardKey.KEY_F7))
                 Settings.CycleWeatherElement();
-            }
 
-            if (IsKeyPressed(KeyboardKey.KEY_F8))
+            if (IsKeyPressed(KeyboardKey.KEY_F8)) {
                 Settings.ShowElementName = !Settings.ShowElementName;
-
-            if (IsKeyPressed(KeyboardKey.KEY_F9))
-                Settings.DrawChunkBorders = !Settings.DrawChunkBorders;
-
-            if (IsKeyPressed(KeyboardKey.KEY_SPACE)) {
-                Matrix.Active = !Matrix.Active;
+                Console.WriteLine("[SYSTEM] Element name display set to " + Settings.ShowElementName.ToString().ToUpper());
             }
+
+            if (IsKeyPressed(KeyboardKey.KEY_F9)) {
+                Settings.DrawChunkBorders = !Settings.DrawChunkBorders;
+                Console.WriteLine("[SYSTEM] Chunk border drawing set to " + Settings.DrawChunkBorders.ToString().ToUpper());
+
+            }
+
+            if (IsKeyPressed(KeyboardKey.KEY_SPACE))
+                Matrix.Active = !Matrix.Active;
 
             if (IsKeyPressed(KeyboardKey.KEY_T)) {
                 if (!Matrix.Active) {
