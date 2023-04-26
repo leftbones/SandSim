@@ -5,9 +5,6 @@ namespace SharpSand;
 
 ////
 // Base Powder
-// - Attempts to move Down first, then DownLeft or DownRight (random choice) if that fails
-// - Chance to move Left or Right depending on Friction property
-
 abstract class Powder : Element {
     public Powder(Vector2i position) : base(position) {
         Type = ElementType.Powder;
