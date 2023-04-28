@@ -25,6 +25,9 @@ class DrawingTools {
 
     public bool PaintOver { get; private set; } = false;
 
+    public Vector2i MousePosA { get; set; }
+    public Vector2i MousePosB { get; set; }
+
 
     public DrawingTools(Vector2i screen_size, Vector2i matrix_size) {
         ScreenSize = screen_size;
@@ -45,7 +48,33 @@ class DrawingTools {
     }
 
     // Read inputs for resizing the brush and changing elements
-    public void Update() {
+    public void Update(Matrix matrix) {
+        // Update mouse position
+        MousePosB = MousePosA;
+        MousePosA = GetMousePos();
+
+        // Painting
+        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) {
+            for (int x = 0; x < BrushSize; x++) {
+                for (int y = 0; y < BrushSize; y++) {
+                    Vector2i A = new Vector2i((MousePosA.X - BrushSize / 2) + x, (MousePosA.Y - BrushSize / 2) + y);
+                    Vector2i B = new Vector2i((MousePosB.X - BrushSize / 2) + x, (MousePosB.Y - BrushSize / 2) + y);
+                    PaintLine(matrix, A, B);
+                }
+            }
+        }
+
+        // Erasing
+        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT)) {
+            for (int x = 0; x < BrushSize; x++) {
+                for (int y = 0; y < BrushSize; y++) {
+                    Vector2i A = new Vector2i((MousePosA.X - BrushSize / 2) + x, (MousePosA.Y - BrushSize / 2) + y);
+                    Vector2i B = new Vector2i((MousePosB.X - BrushSize / 2) + x, (MousePosB.Y - BrushSize / 2) + y);
+                    PaintLine(matrix, A, B, "SharpSand.Air");
+                }
+            }
+        }
+
         // Brush Size (Hold LSHIFT for faster scrolling)
         int MouseWheelAmt = (int)GetMouseWheelMove();
         if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
@@ -137,9 +166,45 @@ class DrawingTools {
         }
     }
 
-    // Paint a line of the given thickness from point a to point b (only straight lines for now)
-    public void PaintLine(Matrix matrix, Vector2i a, Vector2i b, string element_name) {
+    // Paint a line from point A to point B
+    public void PaintLine(Matrix matrix, Vector2i a, Vector2i b, string? element_name=null) {
+        string element = element_name ?? BrushElement;
 
+        int w = b.X - a.X;
+        int h = b.Y - a.Y;
+        Vector2i d1 = Vector2i.Zero;
+        Vector2i d2 = Vector2i.Zero;
+
+        if (w < 0) d1.X = -1; else if (w > 0) d1.X = 1;
+        if (h < 0) d1.Y = -1; else if (h > 0) d1.Y = 1;
+        if (w < 0) d2.X = -1; else if (w > 0) d2.X = 1;
+
+        int longest  = Math.Abs(w);
+        int shortest = Math.Abs(h);
+        if (!(longest > shortest)) {
+            longest = Math.Abs(h);
+            shortest = Math.Abs(w);
+            if (h < 0) d2.Y = -1; else if (h > 0) d2.Y = 1;
+            d2.X = 0;
+        }
+
+        Type t = Type.GetType(element)!;
+
+        int numerator = longest >> 1;
+        for (int i = 0; i <= longest; i++) {
+            Vector2i pos = new Vector2i(a.X, a.Y);
+            if (PaintOver || matrix.IsEmpty(pos) || element == "SharpSand.Air" && !matrix.IsEmpty(pos))
+                matrix.Set(pos, (Element)Activator.CreateInstance(t, pos)!);
+            numerator += shortest;
+            if (!(numerator < longest)) {
+                numerator -= longest;
+                a.X += d1.X;
+                a.Y += d1.Y;
+            } else {
+                a.X += d2.X;
+                a.Y += d2.Y;
+            }
+        }
     }
 
     // Draw a rectangle indicator for the brush position and size

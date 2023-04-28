@@ -54,6 +54,7 @@ abstract class Element {
     public Color Color { get; set; } = Color.WHITE;                 // Current color of the element (BaseColor +/- ColorOffset)
     public Color BaseColor { get; set; }= Color.MAGENTA;            // Base color of the element before any offset is applied
     public int ColorOffset { get; set; } = 25;                      // How far the BaseColor should be offset
+    public bool NoFireColor { get; set; } = false;                  // If the element should not have it's color affected by the 'OnFire' flag
 
 
     public Element(Vector2i position) {
@@ -70,7 +71,7 @@ abstract class Element {
 
         if (OnFire) {
             Health -= 1.0f * BurnDamageModifier;
-            ModifyColor();
+            if (!NoFireColor) ModifyColor();
         }
 
         if ((!Settled && Type != ElementType.Solid ) || ForceAct) {

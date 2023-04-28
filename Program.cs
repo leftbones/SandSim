@@ -112,17 +112,7 @@ class Program {
 
             // Update
             Matrix.Update();
-            DrawingTools.Update();
-
-            // Brush
-            if (IsMouseButtonDown(MouseButton.MOUSE_LEFT_BUTTON)) {
-                DrawingTools.Paint(Matrix);
-            }
-
-            // Eraser
-            if (IsMouseButtonDown(MouseButton.MOUSE_RIGHT_BUTTON)) {
-                DrawingTools.Erase(Matrix);
-            }
+            DrawingTools.Update(Matrix);
 
             // Weather
             if (Settings.WeatherEnabled) {
