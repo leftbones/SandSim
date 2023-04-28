@@ -2,17 +2,18 @@ using Raylib_cs;
 
 namespace SharpSand;
 
-class Plant : Solid {
+class Wood : Solid {
     private float GrowthChance = 0.08f;
     private bool CanGrow = true;
     private bool Acted = false;
 
-    public Plant(Vector2i position) : base(position) {
-        Flammability = 0.02f;
-        BurnDamageModifier = 1.0f;
+    public Wood(Vector2i position) : base(position) {
+        Flammability = 0.005f;
+        BurnDamageModifier = 0.25f;
         ActDirections = Direction.ShuffledCardinal;
         ForceAct = true;
-        BaseColor = new Color(7, 197, 102, 255);
+        ColorOffset = 8;
+        BaseColor = new Color(71, 62, 39, 255);
         ModifyColor();
     }
 
@@ -30,7 +31,7 @@ class Plant : Solid {
         if (Acted)
             return;
 
-        // Attempt to grow to nearby water
+        // Attempt to create plant from nearby water
         if (other.GetType() == typeof(Water)) {
             if (!OnFire && RNG.Roll(GrowthChance)) {
                 if (CanGrow) {
@@ -57,6 +58,9 @@ class Plant : Solid {
             // Small chance to create an ember
             if (RNG.Chance(1)) {
                 matrix.Set(Position, new Ember(Position));
+                return;
+            } else {
+                matrix.Set(Position, new Soot(Position));
                 return;
             }
         }

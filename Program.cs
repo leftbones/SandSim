@@ -47,7 +47,9 @@ class Program {
             "<F5> Reset world",
             "<F6> Toggle weather",
             "<F7> Cycle weather elements",
-            "<F8> Toggle element name"
+            "<F8> Toggle element name",
+            "<F9> Save world (experimental)",
+            "<F10> Load world (experimental)",
         };
 
         Console.WriteLine("[SYSTEM] Init complete");

@@ -362,4 +362,14 @@ class Matrix {
             e.Settled = false;
         }
     }
+
+    // Save the matrix to a file
+    public void Save() {
+
+    }
+
+    // Load a file to the matrix
+    public void Load() {
+
+    }
 }

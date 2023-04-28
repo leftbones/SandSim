@@ -111,7 +111,12 @@ abstract class Element {
 
                 // Temperature transference
                 if (HeatFactor > 0.0 || OnFire) {
-                    if (OnFire && e.Flammability > 0.0f && RNG.Roll(e.Flammability)) e.OnFire = true;
+                    // Attempt to spread fire
+                    if (OnFire && e.Flammability > 0.0f) {
+                        if (RNG.Roll(e.Flammability))
+                            e.OnFire = true;
+                    }
+
                     float heat_power = HeatFactor * (RNG.Range(0, 15) * 1.0f);
                     heat_power = OnFire ? Math.Max(heat_power, 1.0f) : heat_power;
                     e.ChangeTemp(matrix, heat_power);

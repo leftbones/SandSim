@@ -10,6 +10,8 @@ class Fire : Gas {
     public Fire(Vector2i position) : base(position) {
         Lifetime = 20;
         Density = -1.0f;
+        OnFire = true;
+        BurnDamageModifier = 0.0f;
         HeatFactor = 2.0f;
         BaseColor = Effect.GetFireColor();
         Color = BaseColor;
