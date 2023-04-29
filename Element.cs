@@ -5,7 +5,7 @@ using Raylib_cs;
 
 namespace SharpSand;
 
-enum ElementType { Solid, Liquid, Gas, Powder }
+enum ElementType { None, Solid, Liquid, Gas, Powder }
 
 abstract class Element {
     public ElementType Type { get; set; }

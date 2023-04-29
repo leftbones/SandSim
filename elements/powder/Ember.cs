@@ -30,6 +30,9 @@ class Ember : Powder {
             return;
         }
 
+        if (element.Flammability > 0.0f && RNG.Roll(element.Flammability))  
+            element.OnFire = true;
+
         base.ActOnOther(matrix, element);
     }
 

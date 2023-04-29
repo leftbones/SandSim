@@ -31,6 +31,6 @@ class Lava : Liquid {
     }
 
     public override void CoolReaction(Matrix matrix) {
-        matrix.Set(Position, new Concrete(Position));
+        matrix.Set(Position, new Stone(Position));
     }
 }

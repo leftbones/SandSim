@@ -6,7 +6,6 @@ namespace SharpSand;
 
 
 class DrawingTools {
-    private string[] ElementNames = new string[] { "Sand", "Dirt", "Salt", "Snow", "Nanobots", "Water", "Oil", "Lava", "Fire", "Ice", "Plant", "Wood", "Concrete", "Wick", "Ember", "Soot", "Smoke", "Steam" };
     private List<Texture2D> ElementTextures = new List<Texture2D>();
     private int ElementIndex = 0;
 
@@ -15,11 +14,12 @@ class DrawingTools {
     public int Scale { get; private set; }
 
     public int BrushSize { get; private set; } = 5;
-    public int BrushDensity { get { return Math.Max(BrushSize / 2, 1); } }
-    public string BrushElement { get { return "SharpSand." + ElementNames[ElementIndex]; } }
+    public float BrushDensity { get { return 1.0f / BrushSize; } }
+    public string BrushElement { get { return "SharpSand." + Atlas.Entries.ElementAt(ElementIndex).Key; } }
+    public bool BrushSolid { get { return Atlas.Entries.ElementAt(ElementIndex).Value.ElementType == ElementType.Solid; } }
 
     public int MinBrushSize { get; } = 1;
-    public int MaxBrushSize { get { return 400 / Scale; } }
+    public int MaxBrushSize { get { return 200 / Scale; } }
 
     public Theme Theme { get; private set; }
 
@@ -36,11 +36,12 @@ class DrawingTools {
         Theme = new Theme();
 
         // Generate element preview textures
-        for (int i = 0; i < ElementNames.Length; i++) {
+        for (int i = 0; i < Atlas.Entries.Count; i++) {
             try {
-                ElementTextures.Add(Utility.GetElementTexture("SharpSand." + ElementNames[i], 40, 20, Scale));
+                string Name = Atlas.Entries.ElementAt(i).Key;
+                ElementTextures.Add(Utility.GetElementTexture("SharpSand." + Name, 40, 20, Scale));
             } catch {
-                Console.WriteLine("[ERROR] Failed to generate preview texture for element '" + ElementNames[i] + "'");
+                Console.WriteLine("[ERROR] Failed to generate preview texture for element '" + Atlas.Entries.ElementAt(i).Key + "'");
             }
         }
 
@@ -54,26 +55,12 @@ class DrawingTools {
         MousePosA = GetMousePos();
 
         // Painting
-        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) {
-            for (int x = 0; x < BrushSize; x++) {
-                for (int y = 0; y < BrushSize; y++) {
-                    Vector2i A = new Vector2i((MousePosA.X - BrushSize / 2) + x, (MousePosA.Y - BrushSize / 2) + y);
-                    Vector2i B = new Vector2i((MousePosB.X - BrushSize / 2) + x, (MousePosB.Y - BrushSize / 2) + y);
-                    PaintLine(matrix, A, B);
-                }
-            }
-        }
+        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            PaintLine(matrix, MousePosA, MousePosB, BrushElement, BrushSize);
 
         // Erasing
-        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT)) {
-            for (int x = 0; x < BrushSize; x++) {
-                for (int y = 0; y < BrushSize; y++) {
-                    Vector2i A = new Vector2i((MousePosA.X - BrushSize / 2) + x, (MousePosA.Y - BrushSize / 2) + y);
-                    Vector2i B = new Vector2i((MousePosB.X - BrushSize / 2) + x, (MousePosB.Y - BrushSize / 2) + y);
-                    PaintLine(matrix, A, B, "SharpSand.Air");
-                }
-            }
-        }
+        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+            PaintLine(matrix, MousePosA, MousePosB, "SharpSand.Air", BrushSize, true);
 
         // Brush Size (Hold LSHIFT for faster scrolling)
         int MouseWheelAmt = (int)GetMouseWheelMove();
@@ -84,7 +71,7 @@ class DrawingTools {
         BrushSize = Math.Clamp(BrushSize, MinBrushSize, MaxBrushSize);
 
         // Change Brush Element
-        if (IsKeyPressed(KeyboardKey.KEY_W) && ElementIndex < ElementNames.Length - 1)
+        if (IsKeyPressed(KeyboardKey.KEY_W) && ElementIndex < Atlas.Entries.Count - 1)
             ElementIndex++;
 
         if (IsKeyPressed(KeyboardKey.KEY_S) && ElementIndex > 0)
@@ -95,116 +82,49 @@ class DrawingTools {
             PaintOver = !PaintOver;
     }
 
-    // Paint elements in the brush area, scattered based on density
-    public void Paint(Matrix matrix) {
-        for (int i = 0; i < BrushDensity; i++) {
-            Vector2i Pos = GetMousePos();
-            int Size = BrushSize * (Scale / 2);
-            int BX = ((int)Pos.X * Scale) - (Size / Scale) * Scale;
-            int BY = ((int)Pos.Y * Scale) - (Size / Scale) * Scale;
-
-            Vector2i Position = new Vector2i(
-                RNG.Range(BX, BX + (Size * Scale / 2) - 1) / Scale,
-                RNG.Range(BY, BY + (Size * Scale / 2) - 1) / Scale
-            );
-
-            if (PaintOver || matrix.IsEmpty(Position)) {
-                Type t = Type.GetType(BrushElement)!;
-                Element e = (Element)Activator.CreateInstance(t, Position)!;
-                if (e.Type == ElementType.Solid) {
-                    PaintSolid(matrix);
-                    return;
-                }
-                matrix.Set(Position, (Element)Activator.CreateInstance(t, Position)!);
-            }
-        }
-    }
-
-    // Paint every element within the brush area
-    public void PaintSolid(Matrix matrix) {
-        Vector2i Pos = GetMousePos();
-        int Size = BrushSize * (Scale / 2);
-        int BX = ((int)Pos.X * Scale) - (Size / Scale) * Scale;
-        int BY = ((int)Pos.Y * Scale) - (Size / Scale) * Scale;
-
-        for (int x = BX; x < BX + (Size * Scale / 2); x++) {
-            for (int y = BY; y < BY + (Size * Scale / 2); y++) {
-                Vector2i Position = new Vector2i(x / Scale, y / Scale);
-
-                if (PaintOver || matrix.IsEmpty(Position)) {
-                    Type t = Type.GetType(BrushElement)!;
-                    Element e = (Element)Activator.CreateInstance(t, Position)!;
-                    matrix.Set(Position, e);
-                }
-            }
-        }
-    }
-
-    // Erase elements (paints air)
-    public void Erase(Matrix matrix) {
-        Vector2i Pos = GetMousePos();
-        int Size = BrushSize * (Scale / 2);
-        int BX = ((int)Pos.X * Scale) - (Size / Scale) * Scale;
-        int BY = ((int)Pos.Y * Scale) - (Size / Scale) * Scale;
-
-        for (int x = BX; x < BX + (Size * Scale / 2); x++) {
-            for (int y = BY; y < BY + (Size * Scale / 2); y++) {
-                Vector2i Position = new Vector2i(x / Scale, y / Scale);
-                matrix.Set(Position, new Air(Position));
-            }
-        }
-    }
-
-    // Paint a box of an element to the matrix 
-    public void PaintBox(Matrix matrix, Vector2i origin, Vector2i size, string element_name) {
-        for (int x = (int)origin.X; x < (int)origin.X + size.X; x++) {
-            for (int y = (int)origin.Y; y < (int)origin.Y + size.Y; y++) {
-                Vector2i Pos = new Vector2i(x, y);
-                Type t = Type.GetType("SharpSand." + element_name)!;
-                matrix.Set(new Vector2i(x, y), (Element)Activator.CreateInstance(t, Pos)!);
-            }
-        }
-    }
-
     // Paint a line from point A to point B
-    public void PaintLine(Matrix matrix, Vector2i a, Vector2i b, string? element_name=null) {
-        string element = element_name ?? BrushElement;
+    public void PaintLine(Matrix matrix, Vector2i a, Vector2i b, string element_name, int size, bool erase=false) {
+        float Density = BrushDensity;
 
-        int w = b.X - a.X;
-        int h = b.Y - a.Y;
-        Vector2i d1 = Vector2i.Zero;
-        Vector2i d2 = Vector2i.Zero;
+        bool Force = false;
+        if (PaintOver || erase)
+            Force = true;
 
-        if (w < 0) d1.X = -1; else if (w > 0) d1.X = 1;
-        if (h < 0) d1.Y = -1; else if (h > 0) d1.Y = 1;
-        if (w < 0) d2.X = -1; else if (w > 0) d2.X = 1;
+        List<Vector2i> Points = Utility.GetLinePoints(a, b, size).Distinct().ToList();
+        List<Vector2i> Cache = new List<Vector2i>();
 
-        int longest  = Math.Abs(w);
-        int shortest = Math.Abs(h);
-        if (!(longest > shortest)) {
-            longest = Math.Abs(h);
-            shortest = Math.Abs(w);
-            if (h < 0) d2.Y = -1; else if (h > 0) d2.Y = 1;
-            d2.X = 0;
-        }
+        Type t = Type.GetType(element_name)!;
 
-        Type t = Type.GetType(element)!;
+        foreach (Vector2i Point in Points) {
+            // Point has already been visited
+            if (Cache.Contains(Point))
+                continue;
 
-        int numerator = longest >> 1;
-        for (int i = 0; i <= longest; i++) {
-            Vector2i pos = new Vector2i(a.X, a.Y);
-            if (PaintOver || matrix.IsEmpty(pos) || element == "SharpSand.Air" && !matrix.IsEmpty(pos))
-                matrix.Set(pos, (Element)Activator.CreateInstance(t, pos)!);
-            numerator += shortest;
-            if (!(numerator < longest)) {
-                numerator -= longest;
-                a.X += d1.X;
-                a.Y += d1.Y;
-            } else {
-                a.X += d2.X;
-                a.Y += d2.Y;
+            // Brush element is not solid and RNG roll fails
+            if (!BrushSolid && !RNG.Roll(Density))
+                continue;
+
+            // Brush is erasing and point is already empty
+            if (erase && matrix.IsEmpty(Point)) {
+                Cache.Add(Point);
+                continue;
             }
+
+            // Brush is not forced and point is not empty
+            if (!Force && !matrix.IsEmpty(Point)) {
+                Cache.Add(Point);
+                continue;
+            }
+
+            var NewElement = (Element)Activator.CreateInstance(t, Point)!;
+            matrix.Set(Point, NewElement);
+            Cache.Add(Point);
         }
+    }
+
+    // Paint a circle using the line drawing algorithm
+    public void PaintCircle(Vector2i center, int size) {
+
     }
 
     // Draw a rectangle indicator for the brush position and size

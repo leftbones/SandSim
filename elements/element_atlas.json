@@ -1,0 +1,123 @@
+////
+// Solid
+{
+    "Stone" : {
+        "DisplayName" : "Stone",
+        "Description" : "Hard and sturdy.",
+        "ElementType" : "Solid"
+    },
+
+    "Ice" : {
+        "DisplayName" : "Ice",
+        "Description" : "Cold, solid water.",
+        "ElementType" : "Solid"
+    },
+
+    "Plant" : {
+        "DisplayName" : "Plant",
+        "Description" : "Naturally invasive, and water's worst nightmare.",
+        "ElementType" : "Solid"
+    },
+
+    "Wood" : {
+        "DisplayName" : "Wood",
+        "Description" : "Punching it won't do anything, but watering it might!",
+        "ElementType" : "Solid"
+    },
+
+    "Wick" : {
+        "DisplayName" : "Wick",
+        "Description" : "Fast burning, good for lighting explosives!",
+        "ElementType" : "Solid"
+    },
+
+
+////
+// Liquid
+
+    "Water" : {
+        "DisplayName" : "Water",
+        "Description" : "Ice that isn't cold enough.",
+        "ElementType" : "Liquid"
+    },
+
+    "Oil" : {
+        "DisplayName" : "Oil",
+        "Description" : "Flammable liquid.",
+        "ElementType" : "Liquid"
+    },
+
+    "Lava" : {
+        "DisplayName" : "Lava",
+        "Description" : "If it was underground, it would be called Magma.",
+        "ElementType" : "Liquid"
+    },
+
+
+////
+// Gas
+
+    "Fire" : {
+        "DisplayName" : "Fire",
+        "Description" : "Hot!",
+        "ElementType" : "Gas"
+    },
+
+    "Smoke" : {
+        "DisplayName" : "Smoke",
+        "Description" : "Sometimes left behind when stuff burns.",
+        "ElementType" : "Gas"
+    },
+
+    "Steam" : {
+        "DisplayName" : "Steam",
+        "Description" : "Water that got too hot.",
+        "ElementType" : "Gas"
+    },
+
+
+////
+// Powder
+
+    "Sand" : {
+        "DisplayName" : "Sand",
+        "Description" : "Coarse and rough and irritating and it gets everywhere.",
+        "ElementType" : "Powder"
+    },
+
+    "Salt" : {
+        "DisplayName" : "Salt",
+        "Description" : "They're minerals, Marie.",
+        "ElementType" : "Powder"
+    },
+
+    "Dirt" : {
+        "DisplayName" : "Dirt",
+        "Description" : "You know, from the ground?",
+        "ElementType" : "Powder"
+    },
+
+    "Snow" : {
+        "DisplayName" : "Snow",
+        "Description" : "Water that is too cold to be water, but too warm to be ice.",
+        "ElementType" : "Powder"
+    },
+
+    "Ember" : {
+        "DisplayName" : "Ember",
+        "Description" : "Remains of still-smoldering stuff.",
+        "ElementType" : "Powder"
+    },
+
+    "Soot" : {
+        "DisplayName" : "Soot",
+        "Description" : "Little clumps of ash.",
+        "ElementType" : "Powder"
+    },
+
+    "Nanobots" : {
+        "DisplayName" : "Nanobots",
+        "Description" : "Tiny robots programmed to consume and multiply.",
+        "ElementType" : "Powder"
+    }
+}

@@ -6,6 +6,7 @@
 * Clean up directory structure! Holy shit this is a MESS.
 * Add some sort of "Game" or "Simulation" class to control Matrix, DrawingTools, Theme, etc. all in one place.
 
+
 ## Eventually List
 * Gasses are currently unable to become settled because there are too many factors that determine if they should unsettle, this might not be a problem at all
 * Work out a way to transfer temperature between elements
@@ -15,6 +16,11 @@
 * The RNG methods I'm using are all over the place, I should probably commit to just using RNG.Roll and remove all instances of RNG.Chance (RNG.Odds is okay for specific odds)
 * Might be a good idea to replace all the instances where I create a new Vector2 list for movement directions with a List<Vector2> property on element that I can just overwrite, to save from having to create new lists every step
 * Separate Density into different properties for Liquid and Gas so they can't interact in any way
+
+
+## Known Bugs
+* The brush indicator sometimes fails to align to the grid properly and is off by half a cell or so, first noticed after changing from Vector2 to Vector2i
+
 
 ## Density Explained
 "Density" is a scientific term that I'm using in a completely wrong way to determine how liquids and gasses interact with other liquids and gasses.
@@ -56,3 +62,31 @@ Example: Water comes in contact with Lava
 
 Water's idle temperature regulation can't compete with Lava's HeatFactor, once Water's ActiveTemp reaches 100.0, Water becomes Steam
 If Water were continuously applied to Lava, dropping it's ActiveTemp to 0.0, Lava would become Stone
+
+
+## Weird Things
+This code made the brush work like an actual paint brush for some reason (see: https://streamable.com/soqdsg)
+
+public void PaintLine(Matrix matrix, Vector2i a, Vector2i b, string element_name) {
+    float Density = BrushDensity;
+
+    bool Force = false;
+    if (PaintOver || element_name == "SharpSand.Air")
+        Force = true;
+
+    List<Vector2i> Points = Utility.GetLinePoints(a, b);
+    List<Vector2i> Cache = new List<Vector2i>();
+
+    Type t = Type.GetType(element_name)!;
+
+    foreach (Vector2i Point in Points) {
+        if (Cache.Contains(Point))
+            continue;
+
+        if (Force || (RNG.Roll(Density) && matrix.IsEmpty(Point))) {
+            var NewElement = (Element)Activator.CreateInstance(t, Point)!;
+            matrix.Set(Point, NewElement);
+            Cache.Add(Point);
+        }
+    }
+}

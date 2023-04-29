@@ -8,7 +8,7 @@ class Plant : Solid {
     private bool Acted = false;
 
     public Plant(Vector2i position) : base(position) {
-        Flammability = 0.02f;
+        Flammability = 0.04f;
         BurnDamageModifier = 1.0f;
         ActDirections = Direction.ShuffledCardinal;
         ForceAct = true;
