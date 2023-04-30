@@ -63,6 +63,12 @@
         "ElementType" : "Gas"
     },
 
+    "Methane" : {
+        "DisplayName" : "Methane",
+        "Description" : "Natural gas that's highly explosive",
+        "ElementType" : "Gas"
+    },
+
     "Smoke" : {
         "DisplayName" : "Smoke",
         "Description" : "Sometimes left behind when stuff burns.",
@@ -112,6 +118,12 @@
     "Soot" : {
         "DisplayName" : "Soot",
         "Description" : "Little clumps of ash.",
+        "ElementType" : "Powder"
+    },
+
+    "Gunpowder" : {
+        "DisplayName" : "Gunpowder",
+        "Description" : "Sort of like sand, but it explodes.",
         "ElementType" : "Powder"
     },
 

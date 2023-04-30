@@ -12,10 +12,12 @@ class Snow : Powder {
     }
 
     public override void Step(Matrix matrix) {
-        // Chance to drift horizontally
-        foreach (Vector2i MoveDir in Direction.ShuffledHorizontal) {
-            if (RNG.Roll(Drift) && matrix.SwapIfEmpty(Position, Position + MoveDir))
-                return;
+        // Chance to drift horizontally when in the air
+        if (RNG.Roll(Drift) && matrix.IsEmpty(Position + Direction.Down)) {
+            foreach (Vector2i MoveDir in Direction.ShuffledHorizontal) {
+                if (matrix.SwapIfEmpty(Position, Position + MoveDir))
+                    return;
+            }
         }
 
         base.Step(matrix);

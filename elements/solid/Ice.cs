@@ -5,6 +5,7 @@ namespace SharpSand;
 
 class Ice : Solid {
     public Ice(Vector2i position) : base(position) {
+        Health = 20.0f;
         CoolFactor = 2.0f;
         ActDirections = Direction.ShuffledDiagonal;
         ForceAct = true;

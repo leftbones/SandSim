@@ -8,8 +8,9 @@ class Plant : Solid {
     private bool Acted = false;
 
     public Plant(Vector2i position) : base(position) {
+        Health = 10.0f;
         Flammability = 0.04f;
-        BurnDamageModifier = 1.0f;
+        BurnDamageModifier = 0.1f;
         ActDirections = Direction.ShuffledCardinal;
         ForceAct = true;
         BaseColor = new Color(7, 197, 102, 255);

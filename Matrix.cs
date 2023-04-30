@@ -102,6 +102,49 @@ class Matrix {
         }
     }
 
+    // Add an explosion to the matrix
+    public void AddExplosion(Vector2i position, int radius, float power) {
+        List<Vector2i> Points = new List<Vector2i>();
+        List<Vector2i> Cache = new List<Vector2i>();
+
+        // random offsets
+        radius += RNG.Range(-radius / 2, radius * 2);
+        position += new Vector2i(RNG.Range(-2, 2), RNG.Range(-2, 2));
+
+        Points = Utility.GetCirclePoints(position, radius / 2);
+        foreach (Vector2i Point in Points) {
+            float step_power = power;
+            var Steps = Utility.GetLine(position, Point);
+            foreach (Vector2i Step in Steps) {
+                // Step point has already been checked
+                if (Cache.Contains(Step))
+                    continue;
+
+                // Step point is out of bounds
+                if (!InBounds(Step)) {
+                    Cache.Add(Step);
+                    break;
+                }
+
+                Element e = Get(Step);
+                if (e.GetType() != typeof(Air))
+                    step_power -= e.Health;
+
+                if (step_power <= 0.0f)
+                    break;
+
+                var ExplosionFire = new Fire(Step);
+                ExplosionFire.Lifetime /= 3;
+                Set(Step, ExplosionFire);
+
+                if (IsEmpty(Step + Direction.Up))
+                    Set(Step + Direction.Up, new Smoke(Step + Direction.Up));
+
+                Cache.Add(Step);
+            }
+        }
+    }
+
     // Wake the chunk containing an element
     public void WakeChunk(Element e) {
         if (!UseChunks)

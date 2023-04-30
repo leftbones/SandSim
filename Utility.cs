@@ -6,8 +6,81 @@ namespace SharpSand;
 
 
 public static unsafe class Utility {
-    // Get the points along a line between two points, with an optional iteration limit
-    public static List<Vector2i> GetLinePoints(Vector2i start, Vector2i end, int size, int? limit=-1) {
+    public static List<Vector2i> CircleSymmetry(Vector2i center, int x, int y) {
+        return new List<Vector2i>() {
+            new Vector2i(center.X + x, center.Y + y),
+            new Vector2i(center.X - x, center.Y + y),
+            new Vector2i(center.X + x, center.Y - y),
+            new Vector2i(center.X - x, center.Y - y),
+            new Vector2i(center.X + y, center.Y + x),
+            new Vector2i(center.X - y, center.Y + x),
+            new Vector2i(center.X + y, center.Y - x),
+            new Vector2i(center.X - y, center.Y - x)
+        };
+    }
+
+    public static List<Vector2i> GetCirclePoints(Vector2i center, int radius) {
+        int x = 0;
+        int y = radius;
+        int d = 3 - 2 * radius;
+        var Points = CircleSymmetry(center, x, y);
+
+        while (y >= x) {
+            x++;
+            if (d > 0) {
+                y--;
+                d = d + 4 * (x - y) + 10;
+            } else {
+                d = d + 4 * x + 6;
+            }
+
+            Points.AddRange(CircleSymmetry(center, x, y));
+        }
+
+        return Points;
+    }
+
+    // Get the points along a single cell line
+    public static List<Vector2i> GetLine(Vector2i a, Vector2i b) {
+        List<Vector2i> Points = new List<Vector2i>();
+
+        int w = b.X - a.X;
+        int h = b.Y - a.Y;
+        Vector2i d1 = Vector2i.Zero;
+        Vector2i d2 = Vector2i.Zero;
+
+        if (w < 0) d1.X = -1; else if (w > 0) d1.X = 1;
+        if (h < 0) d1.Y = -1; else if (h > 0) d1.Y = 1;
+        if (w < 0) d2.X = -1; else if (w > 0) d2.X = 1;
+
+        int longest  = Math.Abs(w);
+        int shortest = Math.Abs(h);
+        if (!(longest > shortest)) {
+            longest = Math.Abs(h);
+            shortest = Math.Abs(w);
+            if (h < 0) d2.Y = -1; else if (h > 0) d2.Y = 1;
+            d2.X = 0;
+        }
+
+        int numerator = longest >> 1;
+        for (int i = 0; i <= longest; i++) {
+            Points.Add(new Vector2i(a.X, a.Y));
+            numerator += shortest;
+            if (!(numerator < longest)) {
+                numerator -= longest;
+                a.X += d1.X;
+                a.Y += d1.Y;
+            } else {
+                a.X += d2.X;
+                a.Y += d2.Y;
+            }
+        }
+
+        return Points;
+    }
+
+    // Get the points along a line between two points
+    public static List<Vector2i> GetLinePoints(Vector2i start, Vector2i end, int size) {
         List<Vector2i> Points = new List<Vector2i>();
 
         for (int x = 0; x < size; x++) {
@@ -45,9 +118,6 @@ public static unsafe class Utility {
                         a.X += d2.X;
                         a.Y += d2.Y;
                     }
-
-                    if (numerator == limit)
-                        break;
                 }
             }
         }
@@ -66,9 +136,9 @@ public static unsafe class Utility {
     // Return a color offset by a specified amount
     public static Color OffsetColor(Color color, int offset) {
         int Offset = RNG.Range(-offset, offset);
-        int R = Math.Clamp(color.r + Offset, 0, 255);
-        int G = Math.Clamp(color.g + Offset, 0, 255);
-        int B = Math.Clamp(color.b + Offset, 0, 255);
+        int R = Math.Clamp(color.r + Offset, 10, 255);
+        int G = Math.Clamp(color.g + Offset, 10, 255);
+        int B = Math.Clamp(color.b + Offset, 10, 255);
 
         return new Color(R, G, B, color.a);
     }
@@ -95,6 +165,34 @@ public static unsafe class Utility {
         for (int x = 0; x < width / scale; x++) {
             for (int y = 0; y < height / scale; y++) {
                 Color c = GetElementOffsetColor(element_name);
+                int ix = x * scale;
+                int iy = y * scale;
+                
+                for (int i = ix; i < ix + scale; i++) {
+                    for (int j = iy; j < iy + scale; j++) {
+                        ImageDrawPixel(ref Buffer, i, j, c);
+                    }
+                }
+            }
+        }
+
+        UpdateTexture(Texture, Buffer.data);
+
+        return Texture;
+    }
+
+    public static Texture2D GetRandomTexture(int width, int height, int scale) {
+        Image Buffer = GenImageColor(width, height, Color.MAGENTA);
+        Texture2D Texture = LoadTextureFromImage(Buffer);
+
+        for (int x = 0; x < width / scale; x++) {
+            for (int y = 0; y < height / scale; y++) {
+                Color c = new Color(
+                    RNG.Range(0, 255),
+                    RNG.Range(0, 255),
+                    RNG.Range(0, 255),
+                    255
+                );
                 int ix = x * scale;
                 int iy = y * scale;
                 

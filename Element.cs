@@ -18,7 +18,7 @@ abstract class Element {
     // Tracking
     public int Lifetime { get; set; } = -1;                 // How long the element will live (in ticks), -1 is no limit
     public int TicksLived { get; set; } = 0;                // How many ticks the element has already lived
-    public float Health { get; set; } = 100;                // Current health of the element, hitting 0 triggers the Expire method
+    public float Health { get; set; } = 1;                  // Current health of the element, hitting 0 triggers the Expire method (Defaults: Solid - 50, Liquid/Powder - 10, Gas - 1)
     public bool AlreadyStepped { get; set; } = false;       // If the element has already run it's step method once in the current update loop
 
     ////
@@ -91,10 +91,11 @@ abstract class Element {
 
     // Attempt to unsettle a neighboring element (called by ActOnNeighbors)
     public virtual void UnsettleOther(Element other) {
-        if (RNG.Roll(Friction)) {
+        if (RNG.Roll(Friction))
             Settled = false;
+
+        if (RNG.Roll(other.Friction))
             other.Settled = false;
-        }
     }
 
     // Call ActOnOther and UnsettleOther for all neighbors in the directions set on ActDirections

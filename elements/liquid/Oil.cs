@@ -19,9 +19,16 @@ class Oil : Liquid {
     }
 
     public override void Expire(Matrix matrix) {
-        foreach (Vector2i Dir in Direction.Upward) {
-            if (matrix.IsEmpty(Position + Dir))
-                matrix.Set(Position + Dir, new Smoke(Position + Dir));
+        if (OnFire) {
+            // Small chance to cause explosion
+            if (RNG.Roll(0.0005f))
+                matrix.AddExplosion(Position, 10, 100.0f);
+            
+            // Attempt to create smoke
+            foreach (Vector2i Dir in Direction.Upward) {
+                if (matrix.IsEmpty(Position + Dir))
+                    matrix.Set(Position + Dir, new Smoke(Position + Dir));
+            }
         }
 
         matrix.Set(Position, new Smoke(Position));

@@ -8,8 +8,9 @@ class Wood : Solid {
     private bool Acted = false;
 
     public Wood(Vector2i position) : base(position) {
+        Health = 50.0f;
         Flammability = 0.005f;
-        BurnDamageModifier = 0.25f;
+        BurnDamageModifier = 0.12f;
         ActDirections = Direction.ShuffledCardinal;
         ForceAct = true;
         ColorOffset = 8;

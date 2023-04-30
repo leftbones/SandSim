@@ -6,19 +6,30 @@ namespace SharpSand;
 
 abstract class Gas : Element {
     public Gas(Vector2i position) : base(position) {
+        Health = 1.0f;
         Type = ElementType.Gas;
         Spread = 3.0f;
         Drift = 0.2f;
     }
 
     public override void Step(Matrix matrix) {
-        // Chance to move horizontally based on Drift
-        foreach (Vector2i DriftDir in Direction.ShuffledHorizontal) {
-            if (RNG.Roll(Drift)) {
-                if (matrix.SwapIfEmpty(Position, Position + DriftDir))
-                    return;
+        // Chance to move horizontally based on drift if density is not equal to air
+        if (Density != 0.0f) {
+            foreach (Vector2i DriftDir in Direction.ShuffledHorizontal) {
+                if (RNG.Roll(Drift)) {
+                    if (matrix.SwapIfEmpty(Position, Position + DriftDir))
+                        return;
+                }
             }
         }
+
+        // Move left/right based on spread rate and the current tick
+        // Vector2i Dir = matrix.Tick % 2 == 0 ? Direction.Left : Direction.Right;
+        // for (int i = 0; i < Spread; i++) {
+        //     if (RNG.Roll(Drift) && !matrix.SwapIfEmpty(Position, Position + Dir)) {
+        //         return;
+        //     }
+        // }
 
         // Move upward if the space above contains liquid (regardless of density)
         if (matrix.SwapIfType(Position, Position + Direction.Up, ElementType.Liquid))
@@ -32,20 +43,17 @@ abstract class Gas : Element {
         if (RNG.Chance(25))
             return;
 
-        // Attempt to move up/down based on density relative to air
+        // Attempt to move up/down based on density relative to air, moves in any direction if density is equal to air
+        float Roll = Math.Abs(Density);
         List<Vector2i> Directions = Density < 0 ? Direction.ShuffledUpward : Direction.ShuffledDownward;
-        if (Density == 0.0f) Directions = Direction.ShuffledFull;
-        foreach (Vector2i MoveDir in Directions) {
-            if (RNG.Roll(Math.Abs(Density)) && matrix.SwapIfEmpty(Position, Position + MoveDir))
-                return;
+        if (Density == 0.0f) {
+            Directions = Direction.ShuffledFull;
+            Roll = 0.1f;
         }
 
-        // Move left/right based on spread rate and the current tick
-        Vector2i Dir = matrix.Tick % 2 == 0 ? Direction.Left : Direction.Right;
-        for (int i = 0; i < Spread; i++) {
-            if (RNG.CoinFlip() && !matrix.SwapIfEmpty(Position, Position + Dir)) {
+        foreach (Vector2i MoveDir in Directions) {
+            if (RNG.Roll(Roll) && matrix.SwapIfEmpty(Position, Position + MoveDir))
                 return;
-            }
         }
     }
 }

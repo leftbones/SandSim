@@ -5,6 +5,7 @@ namespace SharpSand;
 
 abstract class Liquid : Element {
     public Liquid(Vector2i position) : base(position) {
+        Health = 10.0f;
         Type = ElementType.Liquid;
         Density = 100.0f;
     }

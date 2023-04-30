@@ -1,4 +1,3 @@
-using System.Numerics;
 using Raylib_cs;
 
 namespace SharpSand;
@@ -6,7 +5,7 @@ namespace SharpSand;
 class Ember : Powder {
     public Ember(Vector2i position) : base(position) {
         Lifetime = 500;
-        Friction = 0.2f;
+        Friction = 0.01f;
         Drift = 0.1f;
         HeatFactor = 2.5f;
         ColorOffset = 35;
@@ -15,10 +14,12 @@ class Ember : Powder {
     }
 
     public override void Step(Matrix matrix) {
-        // Chance to drift horizontally
-        foreach (Vector2i MoveDir in Direction.ShuffledHorizontal) {
-            if (RNG.Roll(Drift) && matrix.SwapIfEmpty(Position, Position + MoveDir))
-                return;
+        // Chance to drift horizontally when in the air
+        if (RNG.Roll(Drift) && matrix.IsEmpty(Position + Direction.Down)) {
+            foreach (Vector2i MoveDir in Direction.ShuffledHorizontal) {
+                if (matrix.SwapIfEmpty(Position, Position + MoveDir))
+                    return;
+            }
         }
 
         base.Step(matrix);
