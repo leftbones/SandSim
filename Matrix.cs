@@ -133,9 +133,13 @@ class Matrix {
                 if (step_power <= 0.0f)
                     break;
 
-                var ExplosionFire = new Fire(Step);
-                ExplosionFire.Lifetime /= 3;
-                Set(Step, ExplosionFire);
+                if (e.Flammability > 0.0f && RNG.Chance(25)) {
+                    e.OnFire = true;
+                } else {
+                    var ExplosionFire = new Fire(Step);
+                    ExplosionFire.Lifetime /= 3;
+                    Set(Step, ExplosionFire);
+                }
 
                 if (IsEmpty(Step + Direction.Up))
                     Set(Step + Direction.Up, new Smoke(Step + Direction.Up));

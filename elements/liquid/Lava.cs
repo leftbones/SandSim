@@ -17,7 +17,7 @@ class Lava : Liquid {
 
     public override void Step(Matrix matrix) {
         // Chance to create fire if the space above is empty
-        if (RNG.Roll(0.001f) && matrix.SwapIfEmpty(Position, Position + Direction.Up)) {
+        if (RNG.Roll(0.001f) && matrix.IsEmpty(Position + Direction.Up)) {
             var Fire = new Fire(Position + Direction.Up);
             Fire.Lifetime /= 2;
             matrix.Set(Position + Direction.Up, Fire);

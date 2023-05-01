@@ -23,14 +23,6 @@ abstract class Gas : Element {
             }
         }
 
-        // Move left/right based on spread rate and the current tick
-        // Vector2i Dir = matrix.Tick % 2 == 0 ? Direction.Left : Direction.Right;
-        // for (int i = 0; i < Spread; i++) {
-        //     if (RNG.Roll(Drift) && !matrix.SwapIfEmpty(Position, Position + Dir)) {
-        //         return;
-        //     }
-        // }
-
         // Move upward if the space above contains liquid (regardless of density)
         if (matrix.SwapIfType(Position, Position + Direction.Up, ElementType.Liquid))
             return;

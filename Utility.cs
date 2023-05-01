@@ -6,6 +6,7 @@ namespace SharpSand;
 
 
 public static unsafe class Utility {
+    // Add points to the other parts of a circle
     public static List<Vector2i> CircleSymmetry(Vector2i center, int x, int y) {
         return new List<Vector2i>() {
             new Vector2i(center.X + x, center.Y + y),
@@ -19,6 +20,7 @@ public static unsafe class Utility {
         };
     }
 
+    // Get the points along the radius of a circle
     public static List<Vector2i> GetCirclePoints(Vector2i center, int radius) {
         int x = 0;
         int y = radius;

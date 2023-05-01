@@ -7,7 +7,8 @@ namespace SharpSand;
 
 class Program {
     static unsafe void Main(string[] args) {
-        // Init + Setup
+        ////
+        // Init
         Console.WriteLine("[SYSTEM] Simulation initialized");
         Vector2i ScreenSize = new Vector2i(1280, 720);
         int Scale = 4;
@@ -18,14 +19,17 @@ class Program {
         InitWindow(ScreenSize.X, ScreenSize.Y, "SandSim");
         SetTargetFPS(200);
 
-        Console.WriteLine("[SYSTEM] Matrix initialized");
+
+        ////
+        // Setup
         var Matrix = new Matrix(ScreenSize, Scale);
+        Console.WriteLine("[SYSTEM] Matrix initialized");
 
         Image BufferImage = GenImageColor(Matrix.Size.X, Matrix.Size.Y, Color.BLACK);
         Texture2D BufferTexture = LoadTextureFromImage(BufferImage);
 
-        var DrawingTools = new DrawingTools(ScreenSize, Matrix.Size);
-
+        var Theme = new Theme();
+        var Interface = new Interface(ScreenSize, Matrix.Size, Scale, Theme);
         var Settings = new Settings();
 
         List<string> HelpText = new List<string>() {
@@ -54,9 +58,16 @@ class Program {
 
         Console.WriteLine("[SYSTEM] Init complete");
 
+
+        ////
         // Main Loop
         while (!WindowShouldClose()) {
-            // Hotkeys
+            ////
+            // Input
+            
+            if (IsKeyPressed(KeyboardKey.KEY_E))
+                Interface.Toggle();
+
             if (IsKeyDown(KeyboardKey.KEY_F1)) Settings.DisplayHelpText = true;
             else Settings.DisplayHelpText = false;
 
@@ -110,9 +121,11 @@ class Program {
                 }
             }
 
+
+            ////
             // Update
+            Interface.Update(Matrix);
             Matrix.Update();
-            DrawingTools.Update(Matrix);
 
             // Weather
             if (Settings.WeatherEnabled) {
@@ -126,7 +139,7 @@ class Program {
             }
 
             // Texture
-            ImageClearBackground(ref BufferImage, DrawingTools.Theme.BackgroundColor);
+            ImageClearBackground(ref BufferImage, Theme.BackgroundColor);
 
             foreach (Element e in Matrix.Elements) {
                 if (e.GetType() != typeof(Air)) {
@@ -138,9 +151,12 @@ class Program {
 
             UpdateTexture(BufferTexture, BufferImage.data);
 
+
+            ////
             // Draw
             BeginDrawing();
-            ClearBackground(DrawingTools.Theme.BackgroundColor);
+
+            ClearBackground(Theme.BackgroundColor);
 
             DrawTexturePro(BufferTexture, new Rectangle(0, 0, Matrix.Size.X, Matrix.Size.Y), new Rectangle(0, 0, ScreenSize.X, ScreenSize.Y), Vector2.Zero, 0, Color.WHITE);
 
@@ -151,36 +167,26 @@ class Program {
                 }
             }
 
-            // Draw Interface
-            DrawingTools.DrawHUD();
-            DrawingTools.DrawFPS();
-            DrawingTools.DrawBrushIndicator();
-
-            // Show help text
-            if (Settings.DisplayHelpText) {
-                for (int i = 0; i < HelpText.Count; i++) { 
-                    DrawingTools.DrawTextShadow(HelpText[i], new Vector2i(5, 80 + (25 * i)));
-                }
-            } else {
-                DrawingTools.DrawTextShadow("<F1> Help", new Vector2i(5, 80));
-            }
-
             // Draw name of element under cursor
             if (Settings.ShowElementName) {
-                Vector2i MousePos = DrawingTools.GetMousePos();
+                Vector2i MousePos = Interface.DrawingTools.GetMousePos();
                 if (Matrix.InBounds(MousePos)) {
                     Element e = Matrix.Get(MousePos);
                     string ElementName = e.ToString()!.Split(".")[1];
                     if (e.OnFire) ElementName += " (on fire)";
                     ElementName += String.Format(" (Temp: {0})", e.ActiveTemp);
 
-                    DrawingTools.DrawTextShadow(ElementName, (MousePos * DrawingTools.Scale) + new Vector2i(5, 5));
+                    Interface.DrawingTools.DrawTextShadow(ElementName, (MousePos * Scale) + new Vector2i(5, 5));
                 }
             }
+
+            // Interface
+            Interface.Draw();
 
             EndDrawing();
         }
 
+        ////
         // Exit
         CloseWindow();
         Console.WriteLine("[SYSTEM] Simulation exited successfully");
