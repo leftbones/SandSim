@@ -14,7 +14,8 @@ class DrawingTools {
     public int Scale { get; private set; }
 
     public int BrushSize { get; set; } = 5;
-    public float BrushDensity { get { return 1.0f / BrushSize; } }
+    public decimal BrushDensityModifier { get; set; } = 0.5m;
+    public float BrushDensity { get { return (float)(BrushDensityModifier / BrushSize); } }
     public string BrushElement { get { return "SharpSand." + Atlas.Entries.ElementAt(ElementIndex).Key; } }
     public bool BrushSolid { get { return Atlas.Entries.ElementAt(ElementIndex).Value.ElementType == ElementType.Solid; } }
 
@@ -122,19 +123,6 @@ class DrawingTools {
             Text += " [+]";
 
         DrawTextShadow(Text, new Vector2i(50, 6));
-    }
-
-    // Draw the current FPS to the upper right corner of the screen
-    public void DrawFPS(Color? color=null) {
-        color = color ?? Theme.ForegroundColor;
-        string FPS = String.Format("{0} FPS", GetFPS());
-        DrawTextShadow(FPS, new Vector2i(ScreenSize.X - (MeasureText(FPS, 20) + 5), 5), Vector2i.One, 20, color);
-    }
-
-    // Draw all of the HUD elements
-    public void DrawHUD() {
-        DrawBrushElement();
-        DrawTextShadow("Brush: " + BrushSize, new Vector2i(5, 30));
     }
 
     // Get the mouse position in the matrix (mouse position on screen adjusted for scale)

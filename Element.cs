@@ -20,6 +20,7 @@ abstract class Element {
     public int TicksLived { get; set; } = 0;                // How many ticks the element has already lived
     public float Health { get; set; } = 1;                  // Current health of the element, hitting 0 triggers the Expire method (Defaults: Solid - 50, Liquid/Powder - 10, Gas - 1)
     public bool AlreadyStepped { get; set; } = false;       // If the element has already run it's step method once in the current update loop
+    public bool Inactive { get; set; } = false;             // If the element is able to step and act (on others)
 
     ////
     // Moveability
@@ -37,12 +38,13 @@ abstract class Element {
     public float CoolFactor { get; set; } = 0.0f;           // How much cooling the element gives off
 
     public float Flammability { get; set; } = 0.0f;         // How likely the element is to be set on fire
-    public float BurnDamageModifier { get; set; } = 1.0f;   // How resistant the element is to damage from fire (doesn't affect flammability)
+    public float BurnDamageModifier { get; set; } = 1.0f;   // How susceptible the element is to damage from fire (doesn't affect flammability)
 
     ////
     // Interaction
-    public bool ForceAct { get; set; } = false;                             // If the element should act on its neighbors (this step) regardless of if it is settled or not
-    public List<Vector2i> ActDirections { get; set; } = Direction.ShuffledFull;      // The directions in which this element interacts with neighboring elements
+    public bool ForceAct { get; set; } = false;                                         // If the element should act on its neighbors (this step) regardless of if it is settled or not
+    public List<Vector2i> ActDirections { get; set; } = Direction.ShuffledCardinal;     // The directions in which this element interacts with neighboring elements
+    public float CorrosionResistance { get; set; } = 0.0f;                              // How resistant the element is to corrosion (rust/acid/etc)
 
     ////
     // Status
@@ -70,17 +72,16 @@ abstract class Element {
             Expire(matrix);
 
         if (OnFire) {
+            Inactive = false;
             Health -= 1.0f * BurnDamageModifier;
             if (!NoFireColor) ModifyColor();
         }
 
-        if ((!Settled && Type != ElementType.Solid ) || ForceAct) {
+        // Act on neighbors if not inactive, not settled (Liquid/Powder), Solid, or ForceAct is set
+        if (!Inactive && (!Settled || Type == ElementType.Solid) || ForceAct) {
             matrix.WakeChunk(this);
             ActOnNeighbors(matrix);
         }
-
-        if (Position == LastPosition && Type != ElementType.Gas) // TODO: Revisit if this gas exclusion is still necessary
-            Settled = true;
     }
 
     // Check surroundings and move accordingly
@@ -91,25 +92,27 @@ abstract class Element {
 
     // Attempt to unsettle a neighboring element (called by ActOnNeighbors)
     public virtual void UnsettleOther(Element other) {
-        if (RNG.Roll(Friction))
+        if (Friction == 1.0f || RNG.Roll(Friction))
             Settled = false;
 
-        if (RNG.Roll(other.Friction))
+        if (other.Friction == 1.0f || RNG.Roll(other.Friction))
             other.Settled = false;
     }
 
-    // Call ActOnOther and UnsettleOther for all neighbors in the directions set on ActDirections
-    // [Note] This used to check if the element was air before acting on it, but that actually hurt performance instead of helping it
+    // Call ActOnOther and UnsettleOther for all neighbors in the directions set on ActDirections, also re-activate all inactive neighbors
     public virtual void ActOnNeighbors(Matrix matrix) {
+        Type this_type = this.GetType();
         foreach (Vector2i Dir in ActDirections) {
             if (matrix.InBounds(Position + Dir)) {
                 Element e = matrix.Get(Position + Dir);
+                Type e_type = e.GetType();
 
-                if (e.GetType() == typeof(Air))
+                if (e_type == typeof(Air))
                     continue;
 
                 UnsettleOther(e);
                 ActOnOther(matrix, e);
+                e.Inactive = false;
 
                 // Temperature transference
                 if (HeatFactor > 0.0 || OnFire) {
@@ -121,13 +124,23 @@ abstract class Element {
 
                     float heat_power = HeatFactor * (RNG.Range(0, 15) * 1.0f);
                     heat_power = OnFire ? Math.Max(heat_power, 1.0f) : heat_power;
+                    if (e_type == this_type) heat_power /= 2;
                     e.ChangeTemp(matrix, heat_power);
                 } else if (CoolFactor > 0.0) {
                     float cool_power = -CoolFactor * (RNG.Range(0, 15) * 0.1f);
+                    if (e_type == this_type) cool_power /= 2;
                     e.ChangeTemp(matrix, cool_power);
                 }
             }
         }
+    }
+
+    // Check if the element is surrounded by neighbors of its same type, and become inactive if true
+    public void ShouldDeactivate(Matrix matrix) {
+        Type this_type = this.GetType();
+        var Neighbors = matrix.GetNeighbors(Position);
+        if (Neighbors.All(e => e.GetType() == this_type))
+            Inactive = true;
     }
 
     // Alter the elements active temperature
@@ -156,11 +169,6 @@ abstract class Element {
         matrix.Set(Position, new Air(Position));
     }
 
-    // Replace this element with a new element
-    public virtual void ReplaceWith(Matrix matrix, Element element) {
-        matrix.Set(Position, element);
-    }
-
     // Remove OnFire status and return the element to it's base color
     public virtual void ExtinguishFire() {
         OnFire = false;
@@ -171,6 +179,11 @@ abstract class Element {
     public void ModifyColor() {
         if (OnFire) {
             Color = Effect.GetFireColor();
+            return;
+        }
+
+        if (Shimmer) {
+            Color = Effect.LightenColor(BaseColor, 100);
             return;
         }
 

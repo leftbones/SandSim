@@ -3,7 +3,7 @@ using Raylib_cs;
 namespace SharpSand;
 
 class Wood : Solid {
-    private float GrowthChance = 0.08f;
+    private float GrowthChance = 0.04f;
     private bool CanGrow = true;
     private bool Acted = false;
 
@@ -11,8 +11,8 @@ class Wood : Solid {
         Health = 50.0f;
         Flammability = 0.005f;
         BurnDamageModifier = 0.12f;
+        CorrosionResistance = 0.5f;
         ActDirections = Direction.ShuffledCardinal;
-        ForceAct = true;
         ColorOffset = 8;
         BaseColor = new Color(71, 62, 39, 255);
         ModifyColor();
@@ -20,6 +20,7 @@ class Wood : Solid {
 
     public override void Step(Matrix matrix) {
         Acted = false;
+
         base.Step(matrix);
     }
 
@@ -44,10 +45,6 @@ class Wood : Solid {
                 Acted = true;
             }
         }
-    }
-
-    public override void HeatReaction(Matrix matrix) {
-        // OnFire = true;
     }
 
     public override void Expire(Matrix matrix) {

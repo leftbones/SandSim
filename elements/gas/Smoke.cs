@@ -14,7 +14,7 @@ class Smoke : Gas {
     }
 
     public override void Expire(Matrix matrix) {
-        if (RNG.Chance(1))
+        if (RNG.Roll(0.1f))
             matrix.Set(Position, new Soot(Position));
         else
             matrix.Set(Position, new Air(Position));

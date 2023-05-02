@@ -32,29 +32,29 @@ class Program {
         var Interface = new Interface(ScreenSize, Matrix.Size, Scale, Theme);
         var Settings = new Settings();
 
-        List<string> HelpText = new List<string>() {
-            "Controls:",
-            "<Mouse 1> Paint",
-            "<Mouse 2> Erase",
-            "<Scroll> Change brush size",
-            "<LShift> Faster scrolling",
-            "<W> Next element",
-            "<S> Previous element",
-            "<O> Toggle 'Paint Over'",
-            "<Space> Pause/Play simulation",
-            "<T> Advance one tick (while paused)",
-            "",
-            "Hotkeys:",
-            "<F2> Cycle simulation speed",
-            "<F3> Toggle chunk processing (experimental)",
-            "<F4> Toggle world borders",
-            "<F5> Reset world",
-            "<F6> Toggle weather",
-            "<F7> Cycle weather elements",
-            "<F8> Toggle element name",
-            "<F9> Save world (experimental)",
-            "<F10> Load world (experimental)",
-        };
+        // List<string> HelpText = new List<string>() {
+        //     "Controls:",
+        //     "<Mouse 1> Paint",
+        //     "<Mouse 2> Erase",
+        //     "<Scroll> Change brush size",
+        //     "<LShift> Faster scrolling",
+        //     "<W> Next element",
+        //     "<S> Previous element",
+        //     "<O> Toggle 'Paint Over'",
+        //     "<Space> Pause/Play simulation",
+        //     "<T> Advance one tick (while paused)",
+        //     "",
+        //     "Hotkeys:",
+        //     "<F2> Cycle simulation speed",
+        //     "<F3> Toggle chunk processing (experimental)",
+        //     "<F4> Toggle world borders",
+        //     "<F5> Reset world",
+        //     "<F6> Toggle weather",
+        //     "<F7> Cycle weather elements",
+        //     "<F8> Toggle element name",
+        //     "<F9> Save world (experimental)",
+        //     "<F10> Load world (experimental)",
+        // };
 
         Console.WriteLine("[SYSTEM] Init complete");
 
@@ -121,6 +121,10 @@ class Program {
                 }
             }
 
+            if (IsKeyPressed(KeyboardKey.KEY_Q)) {
+                Interface.PickElement(Matrix);
+            }
+
 
             ////
             // Update
@@ -144,6 +148,27 @@ class Program {
             foreach (Element e in Matrix.Elements) {
                 if (e.GetType() != typeof(Air)) {
                     Color c = e.Color;
+
+                    // Inactive Overlay
+                    // if (e.Inactive) {
+                    //     c = new Color(
+                    //         Math.Min(e.Color.r + 50, 255),
+                    //         Math.Max(e.Color.g - 50, 0),
+                    //         Math.Max(e.Color.b - 50, 0),
+                    //         e.Color.a
+                    //     );
+                    // }
+
+                    // Settled Overlay
+                    // if (e.Settled) {
+                    //     c = new Color(
+                    //         Math.Max(e.Color.r - 50, 0),
+                    //         Math.Max(e.Color.g - 50, 0),
+                    //         Math.Min(e.Color.b + 50, 255),
+                    //         e.Color.a
+                    //     );
+                    // }
+
                     ImageDrawPixel(ref BufferImage, e.Position.X, e.Position.Y, c);
                     e.AlreadyStepped = false;
                 }
@@ -181,7 +206,7 @@ class Program {
             }
 
             // Interface
-            Interface.Draw();
+            Interface.Draw(Matrix);
 
             EndDrawing();
         }

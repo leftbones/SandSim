@@ -3,7 +3,7 @@ using Raylib_cs;
 namespace SharpSand;
 
 class Plant : Solid {
-    private float GrowthChance = 0.08f;
+    private float GrowthChance = 0.04f;
     private bool CanGrow = true;
     private bool Acted = false;
 
@@ -12,13 +12,13 @@ class Plant : Solid {
         Flammability = 0.04f;
         BurnDamageModifier = 0.1f;
         ActDirections = Direction.ShuffledCardinal;
-        ForceAct = true;
         BaseColor = new Color(7, 197, 102, 255);
         ModifyColor();
     }
 
     public override void Step(Matrix matrix) {
         Acted = false;
+
         base.Step(matrix);
     }
 
@@ -43,10 +43,6 @@ class Plant : Solid {
                 Acted = true;
             }
         }
-    }
-
-    public override void HeatReaction(Matrix matrix) {
-        // OnFire = true;
     }
 
     public override void Expire(Matrix matrix) {

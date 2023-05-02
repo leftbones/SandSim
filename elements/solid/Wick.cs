@@ -6,7 +6,6 @@ class Wick : Solid {
     public Wick(Vector2i position) : base(position) {
         Health = 10.0f;
         Flammability = 0.1f;
-        ForceAct = true;
         ColorOffset = 5;
         BaseColor = new Color(48, 17, 17, 255);
         ModifyColor();

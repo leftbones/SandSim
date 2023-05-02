@@ -10,6 +10,7 @@ abstract class Gas : Element {
         Type = ElementType.Gas;
         Spread = 3.0f;
         Drift = 0.2f;
+        CorrosionResistance = 1.0f;
     }
 
     public override void Step(Matrix matrix) {
@@ -55,7 +56,7 @@ abstract class Gas : Element {
 // Air doesn't really need it's own file because it doesn't do anything
 class Air : Gas {
     public Air(Vector2i position) : base(position) {
-        Color = Color.BLACK;
+        Color = Color.BLACK; // It also doesn't matter what color is set here, because Air is never drawn
     }
 
     public override void Step(Matrix matrix) { }

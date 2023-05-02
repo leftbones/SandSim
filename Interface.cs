@@ -25,6 +25,8 @@ class Interface {
     private List<Texture2D> ElementTextures = new List<Texture2D>();
     private List<ElementListItem> ElementListItems = new List<ElementListItem>();
 
+    private int LastFPS = 0;
+
     public Interface(Vector2i screen_size, Vector2i matrix_size, int scale, Theme theme) {
         ScreenSize = screen_size;
         MatrixSize = matrix_size;
@@ -76,6 +78,13 @@ class Interface {
         DrawingTools.BrushSize -= MouseWheelAmt;
         DrawingTools.BrushSize = Math.Clamp(DrawingTools.BrushSize, DrawingTools.MinBrushSize, DrawingTools.MaxBrushSize);
 
+        // Brush Density
+        if (IsKeyPressed(KeyboardKey.KEY_W) && DrawingTools.BrushDensityModifier < 1.0m)
+            DrawingTools.BrushDensityModifier += 0.1m;
+
+        if (IsKeyPressed(KeyboardKey.KEY_S) && DrawingTools.BrushDensityModifier > 0.0m)
+            DrawingTools.BrushDensityModifier -= 0.1m;
+
         // Toggle PaintOver
         if (IsKeyPressed(KeyboardKey.KEY_O))
             DrawingTools.PaintOver = !DrawingTools.PaintOver;
@@ -84,6 +93,10 @@ class Interface {
     public void Update(Matrix matrix) {
         // Handle user input
         HandleInput(matrix);
+
+        // Update FPS tracker if unpaused
+        if (matrix.Active)
+            LastFPS = GetFPS();
 
         // If interface is not open, break now
         if (!Active && MenuPos == TargetPos)
@@ -101,7 +114,7 @@ class Interface {
         }
     }
 
-    public void Draw() {
+    public void Draw(Matrix matrix) {
         if (Active || MenuPos != TargetPos) {
             // Background
             DrawRectangle(MenuPos.X, MenuPos.Y, MenuSize.X, MenuSize.Y, Theme.WindowColor);
@@ -113,10 +126,20 @@ class Interface {
             }
         }
 
-        // HUD
-        DrawingTools.DrawHUD();
-        DrawingTools.DrawBrushIndicator();
-        if (!Active) DrawingTools.DrawFPS();
+        // HUD Elements
+        if (GetMousePosition().X < MenuPos.X)
+            DrawingTools.DrawBrushIndicator();
+        else
+            DrawCursor();
+
+        DrawHUD();
+        if (!Active) DrawFPS();
+
+        if (!matrix.Active) {
+            string PauseText = "[ PAUSED ]";
+            var CenterPos = new Vector2i((ScreenSize.X / 2) - (MeasureText(PauseText, 20) / 2), 5);
+            DrawingTools.DrawTextShadow(PauseText, CenterPos);
+        }
     }
 
     public void Toggle() {
@@ -127,6 +150,41 @@ class Interface {
             Active = true;
             TargetPos = new Vector2i(ScreenSize.X - MenuSize.X, 0);
         }
+    }
+
+    // Pick the element under the cursor and set it to the brush element
+    public void PickElement(Matrix matrix) {
+        Vector2i MousePos = DrawingTools.GetMousePos();
+        if (matrix.InBounds(MousePos)) {
+            Element e = matrix.Get(MousePos);
+            if (e.GetType() == typeof(Air))
+                return;
+            DrawingTools.ElementIndex = Atlas.Entries.Keys.ToList().IndexOf(e.ToString()!.Split(".")[1]);
+        }
+    }
+
+    // Draw all of the HUD elements
+    public void DrawHUD() {
+        DrawingTools.DrawBrushElement();
+        DrawingTools.DrawTextShadow("Size: " + DrawingTools.BrushSize, new Vector2i(5, 30));
+    }
+
+    // Draw the current FPS to the upper right corner of the screen
+    public void DrawFPS(Color? color=null) {
+        color = color ?? Theme.ForegroundColor;
+        string FPS = String.Format("{0} FPS", LastFPS);
+        DrawingTools.DrawTextShadow(FPS, new Vector2i(ScreenSize.X - (MeasureText(FPS, 20) + 5), 5), Vector2i.One, 20, color);
+    }
+
+    // Draw the cursor used for the menus
+    public void DrawCursor() {
+        int MX = GetMouseX();
+        int MY = GetMouseY();
+
+        DrawCircleLines(MX + 1, MY + 1, 5.0f, Theme.ShadowColor);
+        DrawCircle(MX + 1, MY + 1, 2.0f, Theme.ShadowColor);
+        DrawCircleLines(MX, MY, 5.0f, Theme.ForegroundColor);
+        DrawCircle(MX, MY, 2.0f, Theme.ForegroundColor);
     }
 }
 

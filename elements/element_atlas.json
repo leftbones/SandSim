@@ -31,6 +31,18 @@
         "ElementType" : "Solid"
     },
 
+    "Plastic" : {
+        "DisplayName" : "Plastic",
+        "Description" : "Good for it's versatility, bad for literally everything else.",
+        "ElementType" : "Solid"
+    },
+
+    "Life" : {
+        "DisplayName" : "Life",
+        "Description" : "It's alive! Kinda!",
+        "ElementType" : "Solid"
+    },
+
 
 ////
 // Liquid

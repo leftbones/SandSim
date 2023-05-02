@@ -8,7 +8,6 @@ class Ice : Solid {
         Health = 20.0f;
         CoolFactor = 2.0f;
         ActDirections = Direction.ShuffledDiagonal;
-        ForceAct = true;
         ColorOffset = 15;
         BaseColor = new Color(165, 242, 243, 255);
         ModifyColor();
