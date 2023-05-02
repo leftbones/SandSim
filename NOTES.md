@@ -20,6 +20,7 @@
 
 ## Known Bugs
 * The brush indicator sometimes fails to align to the grid properly and is off by half a cell or so, first noticed after changing from Vector2 to Vector2i
+* Liquid settling is still kind of buggy, good example is lava dropped onto a pool of acid just settles on top of the acid instead of being corroded
 
 
 ## Density Explained

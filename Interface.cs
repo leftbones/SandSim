@@ -4,8 +4,6 @@ using static Raylib_cs.Raylib;
 namespace SharpSand;
 
 // TODO
-// - Add indicator for current element selected
-// - Add element picker with Q key
 // - Add zoom lens by holding some key, maybe shift?
 
 class Interface {
@@ -14,13 +12,37 @@ class Interface {
     public int Scale { get; private set; }
     public Theme Theme { get; private set; }
 
+    public bool MenuActive { get; private set; } = false;
     public Vector2i MenuPos { get; private set; }
-    public Vector2i TargetPos { get; private set; }
+    public Vector2i MenuTargetPos { get; private set; }
     public Vector2i MenuSize { get { return new Vector2i(200, ScreenSize.Y); } }
 
-    public bool Active { get; private set; } = false;
+    public bool SettingsActive { get; private set; } = false;
+    public Vector2i SettingsPos { get; private set; }
+    public Vector2i SettingsTargetPos { get; private set; }
+    public Vector2i SettingsSize { get; private set; } = new Vector2i(600, 500);
 
     public DrawingTools DrawingTools { get; private set; }
+
+    private List<string> HelpText = new List<string>() {
+        "[Controls]",
+        "<Mouse Left/Right> Paint/Erase elements",
+        "<Mouse Wheel> Adjust brush size",
+        "<W/S> Increase/decrease brush density",
+        "<Space> Pause/play simulation",
+        "<T> Advance one tick (while paused)",
+        "<O> Toggle paint overlap",
+        "",
+        "[Hotkeys]",
+        "<F2> Cycle simulation speed",
+        "<F3> Toggle chunk processing (experimental)",
+        "<F4> Toggle world borders",
+        "<F5> Reset world",
+        "<F6> Toggle weather",
+        "<F7> Cycle weather element",
+        "<F8> Toggle element name display",
+        "<F9> Toggle chunk border display",
+    };
 
     private List<Texture2D> ElementTextures = new List<Texture2D>();
     private List<ElementListItem> ElementListItems = new List<ElementListItem>();
@@ -34,7 +56,10 @@ class Interface {
         Theme = theme;
 
         MenuPos = new Vector2i(ScreenSize.X, 0);
-        TargetPos = MenuPos;
+        MenuTargetPos = MenuPos;
+
+        SettingsPos = new Vector2i((ScreenSize.X / 2) - (SettingsSize.X / 2), ScreenSize.Y);
+        SettingsTargetPos = SettingsPos;
 
         // Generate element preview textures + create element list items
         for (int i = 0; i < Atlas.Entries.Count; i++) {
@@ -59,7 +84,7 @@ class Interface {
         DrawingTools.MousePosA = DrawingTools.GetMousePos();
 
         // Prevent painting while the cursor is over the menu while it is open
-        if (!Active || GetMouseX() < ScreenSize.X - MenuSize.X) {
+        if (!MenuActive || GetMouseX() < ScreenSize.X - MenuSize.X) {
 
             // Painting
             if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
@@ -98,15 +123,20 @@ class Interface {
         if (matrix.Active)
             LastFPS = GetFPS();
 
-        // If interface is not open, break now
-        if (!Active && MenuPos == TargetPos)
+        // If any interface window is not open, break now
+        if ((!MenuActive && MenuPos == MenuTargetPos) && (!SettingsActive && SettingsPos == SettingsTargetPos))
             return;
 
-        // Move interface if it's not fully open or closed
-        if (MenuPos.X > TargetPos.X)
-            MenuPos = new Vector2i(MenuPos.X - (MenuSize.X / 10), MenuPos.Y);
-        else if (MenuPos.X < TargetPos.X)
-            MenuPos = new Vector2i(MenuPos.X + (MenuSize.X / 10), MenuPos.Y);
+        // Move interface windows if they are not fully open or closed
+        if (MenuPos.X > MenuTargetPos.X)
+            MenuPos = new Vector2i(MenuPos.X - Math.Abs((MenuTargetPos.X - MenuPos.X) / 10), MenuPos.Y);
+        else if (MenuPos.X < MenuTargetPos.X)
+            MenuPos = new Vector2i(MenuPos.X + Math.Abs((MenuTargetPos.X - MenuPos.X) / 10), MenuPos.Y);
+
+        if (SettingsPos.Y > SettingsTargetPos.Y)
+            SettingsPos = new Vector2i(SettingsPos.X, SettingsPos.Y - Math.Abs((SettingsTargetPos.Y - SettingsPos.Y) / 10));
+        else if (SettingsPos.Y < SettingsTargetPos.Y)
+            SettingsPos = new Vector2i(SettingsPos.X, SettingsPos.Y + Math.Abs((SettingsTargetPos.Y - SettingsPos.Y) / 10));
 
         // Update all element list items    
         foreach (ElementListItem ListItem in ElementListItems) {
@@ -115,7 +145,12 @@ class Interface {
     }
 
     public void Draw(Matrix matrix) {
-        if (Active || MenuPos != TargetPos) {
+        // Help Indicator
+        string HelpShortcut = "<F1> Help";
+        DrawingTools.DrawTextShadow(HelpShortcut, new Vector2i((ScreenSize.X / 2) - (MeasureText(HelpShortcut, 20) / 2), ScreenSize.Y - 25));
+
+        // Element Menu
+        if (MenuActive || MenuPos != MenuTargetPos) {
             // Background
             DrawRectangle(MenuPos.X, MenuPos.Y, MenuSize.X, MenuSize.Y, Theme.WindowColor);
 
@@ -126,6 +161,21 @@ class Interface {
             }
         }
 
+        // Settings Menu
+        if (SettingsActive || SettingsPos != SettingsTargetPos) {
+            // Background
+            DrawRectangle(SettingsPos.X, SettingsPos.Y, SettingsSize.X, SettingsSize.Y, Theme.WindowColor);
+
+            // Header
+            string HeaderText = "[Help]";
+            DrawingTools.DrawTextShadow(HeaderText, new Vector2i(SettingsPos.X + (SettingsSize.X / 2) - (MeasureText(HeaderText, 20) / 2), SettingsPos.Y + 10));
+
+            // Settings
+            for (int i = 0; i < HelpText.Count; i++) {
+                DrawingTools.DrawTextShadow(HelpText[i], new Vector2i(SettingsPos.X + 10, SettingsPos.Y + 30 + (25 * (i + 1))));
+            }
+        }
+
         // HUD Elements
         if (GetMousePosition().X < MenuPos.X)
             DrawingTools.DrawBrushIndicator();
@@ -133,22 +183,35 @@ class Interface {
             DrawCursor();
 
         DrawHUD();
-        if (!Active) DrawFPS();
+        if (!MenuActive) DrawFPS();
 
         if (!matrix.Active) {
-            string PauseText = "[ PAUSED ]";
+            string PauseText = "[PAUSED]";
             var CenterPos = new Vector2i((ScreenSize.X / 2) - (MeasureText(PauseText, 20) / 2), 5);
             DrawingTools.DrawTextShadow(PauseText, CenterPos);
         }
     }
 
-    public void Toggle() {
-        if (Active) {
-            Active = false;
-            TargetPos = new Vector2i(ScreenSize.X, 0);
+    public void ToggleMenu() {
+        if (MenuActive) {
+            MenuActive = false;
+            MenuTargetPos = new Vector2i(ScreenSize.X + 10, 0);
         } else {
-            Active = true;
-            TargetPos = new Vector2i(ScreenSize.X - MenuSize.X, 0);
+            MenuActive = true;
+            MenuTargetPos = new Vector2i(ScreenSize.X - MenuSize.X, 0);
+        }
+    }
+
+    public void ToggleSettings() {
+        if (MenuActive)
+            ToggleMenu();
+
+        if (SettingsActive) {
+            SettingsActive = false;
+            SettingsTargetPos = new Vector2i(SettingsTargetPos.X, ScreenSize.Y + 10);
+        } else {
+            SettingsActive = true;
+            SettingsTargetPos = new Vector2i(SettingsTargetPos.X, (ScreenSize.Y / 2) - (SettingsSize.Y / 2));
         }
     }
 

@@ -187,6 +187,7 @@ class Matrix {
             Elements[position.X, position.Y] = element;
             element.Position = position;
             element.LastDirection = Direction.GetMovementDirection(element.LastPosition, element.Position);
+
             WakeChunk(element);
             return true;
         }

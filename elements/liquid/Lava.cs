@@ -8,6 +8,7 @@ class Lava : Liquid {
     public Lava(Vector2i position) : base(position) {
         Spread = 2.0f;
         Density = 101.0f;
+        OnFire = true;
         BurnDamageModifier = 0.0f;
         HeatFactor = 3.0f;
         NoFireColor = true;

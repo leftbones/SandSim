@@ -18,6 +18,7 @@ class Program {
         SetTraceLogLevel(LOG_WARNING | LOG_ERROR | LOG_FATAL);
         InitWindow(ScreenSize.X, ScreenSize.Y, "SandSim");
         SetTargetFPS(200);
+        SetExitKey(KeyboardKey.KEY_NULL);
 
 
         ////
@@ -32,30 +33,6 @@ class Program {
         var Interface = new Interface(ScreenSize, Matrix.Size, Scale, Theme);
         var Settings = new Settings();
 
-        // List<string> HelpText = new List<string>() {
-        //     "Controls:",
-        //     "<Mouse 1> Paint",
-        //     "<Mouse 2> Erase",
-        //     "<Scroll> Change brush size",
-        //     "<LShift> Faster scrolling",
-        //     "<W> Next element",
-        //     "<S> Previous element",
-        //     "<O> Toggle 'Paint Over'",
-        //     "<Space> Pause/Play simulation",
-        //     "<T> Advance one tick (while paused)",
-        //     "",
-        //     "Hotkeys:",
-        //     "<F2> Cycle simulation speed",
-        //     "<F3> Toggle chunk processing (experimental)",
-        //     "<F4> Toggle world borders",
-        //     "<F5> Reset world",
-        //     "<F6> Toggle weather",
-        //     "<F7> Cycle weather elements",
-        //     "<F8> Toggle element name",
-        //     "<F9> Save world (experimental)",
-        //     "<F10> Load world (experimental)",
-        // };
-
         Console.WriteLine("[SYSTEM] Init complete");
 
 
@@ -64,12 +41,23 @@ class Program {
         while (!WindowShouldClose()) {
             ////
             // Input
-            
-            if (IsKeyPressed(KeyboardKey.KEY_E))
-                Interface.Toggle();
 
-            if (IsKeyDown(KeyboardKey.KEY_F1)) Settings.DisplayHelpText = true;
-            else Settings.DisplayHelpText = false;
+            // Escape closes all interface windows, or closes the game if no windows are open
+            if (IsKeyPressed(KeyboardKey.KEY_ESCAPE)) {
+                if (Interface.MenuActive)
+                    Interface.ToggleMenu();
+                else
+                    break;
+            }
+
+
+            // Open Element Menu            
+            if (!Interface.SettingsActive && IsKeyPressed(KeyboardKey.KEY_E))
+                Interface.ToggleMenu();
+
+            // Open Settings Menu
+            if (IsKeyPressed(KeyboardKey.KEY_F1))
+                Interface.ToggleSettings();
 
             if (IsKeyPressed(KeyboardKey.KEY_F2))
                 Settings.CycleSimulationSpeed();
@@ -160,14 +148,14 @@ class Program {
                     // }
 
                     // Settled Overlay
-                    // if (e.Settled) {
-                    //     c = new Color(
-                    //         Math.Max(e.Color.r - 50, 0),
-                    //         Math.Max(e.Color.g - 50, 0),
-                    //         Math.Min(e.Color.b + 50, 255),
-                    //         e.Color.a
-                    //     );
-                    // }
+                    if (e.Settled) {
+                        c = new Color(
+                            Math.Max(e.Color.r - 50, 0),
+                            Math.Max(e.Color.g - 50, 0),
+                            Math.Min(e.Color.b + 50, 255),
+                            e.Color.a
+                        );
+                    }
 
                     ImageDrawPixel(ref BufferImage, e.Position.X, e.Position.Y, c);
                     e.AlreadyStepped = false;
