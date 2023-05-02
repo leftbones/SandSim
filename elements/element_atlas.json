@@ -53,6 +53,12 @@
         "ElementType" : "Liquid"
     },
 
+    "Acid" : {
+        "DisplayName" : "Acid",
+        "Description" : "Anything this color can't possibly be good.",
+        "ElementType" : "Liquid"
+    },
+
 
 ////
 // Gas

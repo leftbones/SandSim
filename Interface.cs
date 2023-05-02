@@ -3,6 +3,11 @@ using static Raylib_cs.Raylib;
 
 namespace SharpSand;
 
+// TODO
+// - Add indicator for current element selected
+// - Add element picker with Q key
+// - Add zoom lens by holding some key, maybe shift?
+
 class Interface {
     public Vector2i ScreenSize { get; private set; }
     public Vector2i MatrixSize { get; private set; }
@@ -38,7 +43,7 @@ class Interface {
             ElementTextures.Add(ElementTexture);
 
             var Position = new Vector2i(5, 5 + (30 * i));
-            var ClickBox = new Rectangle(ScreenSize.X - MenuSize.X, Position.Y - 5, MenuSize.X, 30);
+            var ClickBox = new Rectangle(0, Position.Y - 5, MenuSize.X, 30);
             var NewListItem = new ElementListItem(i, Position, DisplayName, ElementName, ElementTexture, ClickBox);
             ElementListItems.Add(NewListItem);
         }
@@ -103,7 +108,8 @@ class Interface {
 
             // Element List
             foreach (ElementListItem ListItem in ElementListItems) {
-                ListItem.Draw(Theme, DrawingTools, MenuPos);
+                bool selected = ListItem.Index == DrawingTools.ElementIndex;
+                ListItem.Draw(Theme, DrawingTools, MenuPos, selected);
             }
         }
 
@@ -137,7 +143,7 @@ class ElementListItem {
     public Rectangle ClickBox { get; private set; }
     public bool Active { get; private set; }
 
-    public bool Hovered { get { return CheckCollisionPointRec(GetMousePosition(), ClickBox); } }
+    private Rectangle ItemRec;
 
     public ElementListItem(int index, Vector2i position, string display_name, string element_name, Texture2D preview_texture, Rectangle click_box) {
         Index = index;
@@ -149,14 +155,18 @@ class ElementListItem {
     }
 
     public void Update(DrawingTools drawing_tools) {
-        if (Hovered && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) {
+        if (CheckCollisionPointRec(GetMousePosition(), ItemRec) && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) {
             drawing_tools.ElementIndex = Index;
         }
     }
 
-    public void Draw(Theme theme, DrawingTools drawing_tools, Vector2i origin) {
-        if (Hovered)
-            DrawRectangleRec(ClickBox, theme.HoverHighlight);
+    public void Draw(Theme theme, DrawingTools drawing_tools, Vector2i origin, bool selected) {
+        ItemRec = new Rectangle(origin.X + ClickBox.x, origin.Y + ClickBox.y, ClickBox.width, ClickBox.height);
+
+        if (selected)
+            DrawRectangle(origin.X, origin.Y + (int)ClickBox.y, (int)ClickBox.width, (int)ClickBox.height, theme.SelectHighlight);
+        else if (CheckCollisionPointRec(GetMousePosition(), ItemRec))
+            DrawRectangle(origin.X, origin.Y + (int)ClickBox.y, (int)ClickBox.width, (int)ClickBox.height, theme.HoverHighlight);
 
         DrawTexture(PreviewTexture, origin.X + Position.X, origin.Y + Position.Y, Color.WHITE);
         drawing_tools.DrawTextShadow(DisplayName, new Vector2i(origin.X + Position.X + 50, origin.Y + Position.Y + 1));
