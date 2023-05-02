@@ -148,14 +148,14 @@ class Program {
                     // }
 
                     // Settled Overlay
-                    if (e.Settled) {
-                        c = new Color(
-                            Math.Max(e.Color.r - 50, 0),
-                            Math.Max(e.Color.g - 50, 0),
-                            Math.Min(e.Color.b + 50, 255),
-                            e.Color.a
-                        );
-                    }
+                    // if (e.Settled) {
+                    //     c = new Color(
+                    //         Math.Max(e.Color.r - 50, 0),
+                    //         Math.Max(e.Color.g - 50, 0),
+                    //         Math.Min(e.Color.b + 50, 255),
+                    //         e.Color.a
+                    //     );
+                    // }
 
                     ImageDrawPixel(ref BufferImage, e.Position.X, e.Position.Y, c);
                     e.AlreadyStepped = false;

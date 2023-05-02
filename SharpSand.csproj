@@ -9,8 +9,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="elements\element_atlas.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Raylib-cs" Version="4.2.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="elements\element_atlas.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

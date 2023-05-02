@@ -32,6 +32,8 @@ class Interface {
         "<Space> Pause/play simulation",
         "<T> Advance one tick (while paused)",
         "<O> Toggle paint overlap",
+        "<Q> Pick element under the cursor",
+        "<E> Open the element selection menu",
         "",
         "[Hotkeys]",
         "<F2> Cycle simulation speed",
@@ -107,7 +109,7 @@ class Interface {
         if (IsKeyPressed(KeyboardKey.KEY_W) && DrawingTools.BrushDensityModifier < 1.0m)
             DrawingTools.BrushDensityModifier += 0.1m;
 
-        if (IsKeyPressed(KeyboardKey.KEY_S) && DrawingTools.BrushDensityModifier > 0.0m)
+        if (IsKeyPressed(KeyboardKey.KEY_S) && DrawingTools.BrushDensityModifier > 0.1m)
             DrawingTools.BrushDensityModifier -= 0.1m;
 
         // Toggle PaintOver
@@ -230,6 +232,7 @@ class Interface {
     public void DrawHUD() {
         DrawingTools.DrawBrushElement();
         DrawingTools.DrawTextShadow("Size: " + DrawingTools.BrushSize, new Vector2i(5, 30));
+        DrawingTools.DrawTextShadow("Density: " + DrawingTools.BrushDensityModifier, new Vector2i(5, 50));
     }
 
     // Draw the current FPS to the upper right corner of the screen
