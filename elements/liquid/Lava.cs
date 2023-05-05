@@ -10,7 +10,7 @@ class Lava : Liquid {
         Density = 101.0f;
         OnFire = true;
         BurnDamageModifier = 0.0f;
-        HeatFactor = 3.0f;
+        HeatFactor = 10.0f;
         NoFireColor = true;
         BaseColor = Effect.DarkenColor(Effect.GetFireColor(), 50);
         Color = BaseColor;

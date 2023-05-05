@@ -16,11 +16,13 @@ class Interface {
     public Vector2i MenuPos { get; private set; }
     public Vector2i MenuTargetPos { get; private set; }
     public Vector2i MenuSize { get { return new Vector2i(200, ScreenSize.Y); } }
+    public int MenuScrollOffset { get; set; } = 0;
+    public int MaxMenuItems { get { return ScreenSize.Y / 30; } }
 
     public bool SettingsActive { get; private set; } = false;
     public Vector2i SettingsPos { get; private set; }
     public Vector2i SettingsTargetPos { get; private set; }
-    public Vector2i SettingsSize { get; private set; } = new Vector2i(600, 500);
+    public Vector2i SettingsSize { get; private set; } = new Vector2i(600, 585);
 
     public DrawingTools DrawingTools { get; private set; }
 
@@ -44,6 +46,8 @@ class Interface {
         "<F7> Cycle weather element",
         "<F8> Toggle element name display",
         "<F9> Toggle chunk border display",
+        "<F10> Toggle Spawner hiding",
+        "<F11> Toggle Remover hiding"
     };
 
     private List<Texture2D> ElementTextures = new List<Texture2D>();
@@ -77,7 +81,7 @@ class Interface {
             ElementListItems.Add(NewListItem);
         }
 
-        DrawingTools = new DrawingTools(ScreenSize, MatrixSize, Theme, ElementTextures);
+        DrawingTools = new DrawingTools(ScreenSize, MatrixSize, Scale, Theme, ElementTextures);
     }
 
     public void HandleInput(Matrix matrix) {
@@ -97,20 +101,31 @@ class Interface {
         if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
             DrawingTools.PaintLine(matrix, DrawingTools.MousePosA, DrawingTools.MousePosB, "SharpSand.Air", DrawingTools.BrushSize, erase: true);
 
-        // Brush Size (Hold LSHIFT for faster scrolling)
+        // Mouse Wheel (Brush Size + Menu Scrolling)
         int MouseWheelAmt = (int)GetMouseWheelMove();
-        if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-            MouseWheelAmt *= Scale;
+        if (!MenuActive || GetMouseX() < ScreenSize.X - MenuSize.X) {
+            if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+                MouseWheelAmt *= Scale;
 
-        DrawingTools.BrushSize -= MouseWheelAmt;
-        DrawingTools.BrushSize = Math.Clamp(DrawingTools.BrushSize, DrawingTools.MinBrushSize, DrawingTools.MaxBrushSize);
+            DrawingTools.BrushSize -= MouseWheelAmt;
+            DrawingTools.BrushSize = Math.Clamp(DrawingTools.BrushSize, DrawingTools.MinBrushSize, DrawingTools.MaxBrushSize);
+        } else {
+            MenuScrollOffset -= MouseWheelAmt;
+            MenuScrollOffset = Math.Clamp(MenuScrollOffset, 0, 99);
+        }
 
         // Brush Density
-        if (IsKeyPressed(KeyboardKey.KEY_W) && DrawingTools.BrushDensityModifier < 1.0m)
-            DrawingTools.BrushDensityModifier += 0.1m;
+        if (IsKeyPressed(KeyboardKey.KEY_W) && DrawingTools.BrushDensityModifier < 1.0m) {
+            Decimal Amount = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? 0.1m : 0.01m;
+            DrawingTools.BrushDensityModifier += Amount;
+        }
 
-        if (IsKeyPressed(KeyboardKey.KEY_S) && DrawingTools.BrushDensityModifier > 0.1m)
-            DrawingTools.BrushDensityModifier -= 0.1m;
+        if (IsKeyPressed(KeyboardKey.KEY_S) && DrawingTools.BrushDensityModifier > 0.01m) {
+            Decimal Amount = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? 0.1m : 0.01m;
+            DrawingTools.BrushDensityModifier -= Amount;
+        }
+
+        DrawingTools.BrushDensityModifier = Math.Clamp(DrawingTools.BrushDensityModifier, 0.01m, 1.0m);
 
         // Toggle PaintOver
         if (IsKeyPressed(KeyboardKey.KEY_O))
@@ -157,9 +172,10 @@ class Interface {
             DrawRectangle(MenuPos.X, MenuPos.Y, MenuSize.X, MenuSize.Y, Theme.WindowColor);
 
             // Element List
-            foreach (ElementListItem ListItem in ElementListItems) {
+            for (int i = MenuScrollOffset; i < ElementListItems.Count; i++) {
+                var ListItem = ElementListItems[i];
                 bool selected = ListItem.Index == DrawingTools.ElementIndex;
-                ListItem.Draw(Theme, DrawingTools, MenuPos, selected);
+                ListItem.Draw(Theme, DrawingTools, MenuPos, -MenuScrollOffset, selected);
             }
         }
 
@@ -284,16 +300,16 @@ class ElementListItem {
         }
     }
 
-    public void Draw(Theme theme, DrawingTools drawing_tools, Vector2i origin, bool selected) {
-        ItemRec = new Rectangle(origin.X + ClickBox.x, origin.Y + ClickBox.y, ClickBox.width, ClickBox.height);
+    public void Draw(Theme theme, DrawingTools drawing_tools, Vector2i origin, int scroll_offset, bool selected) {
+        ItemRec = new Rectangle(origin.X + ClickBox.x, (origin.Y + ClickBox.y) + (30 * scroll_offset), ClickBox.width, ClickBox.height);
 
         if (selected)
-            DrawRectangle(origin.X, origin.Y + (int)ClickBox.y, (int)ClickBox.width, (int)ClickBox.height, theme.SelectHighlight);
+            DrawRectangle(origin.X, origin.Y + (int)ClickBox.y + (30 * scroll_offset), (int)ClickBox.width, (int)ClickBox.height, theme.SelectHighlight);
         else if (CheckCollisionPointRec(GetMousePosition(), ItemRec))
-            DrawRectangle(origin.X, origin.Y + (int)ClickBox.y, (int)ClickBox.width, (int)ClickBox.height, theme.HoverHighlight);
+            DrawRectangle(origin.X, origin.Y + (int)ClickBox.y + (30 * scroll_offset), (int)ClickBox.width, (int)ClickBox.height, theme.HoverHighlight);
 
-        DrawTexture(PreviewTexture, origin.X + Position.X, origin.Y + Position.Y, Color.WHITE);
-        drawing_tools.DrawTextShadow(DisplayName, new Vector2i(origin.X + Position.X + 50, origin.Y + Position.Y + 1));
+        DrawTexture(PreviewTexture, origin.X + Position.X, origin.Y + Position.Y + (30 * scroll_offset), Color.WHITE);
+        drawing_tools.DrawTextShadow(DisplayName, new Vector2i(origin.X + Position.X + 50, origin.Y + Position.Y + 1 + (30 * scroll_offset)));
     }
 
     public void Toggle(Vector2i origin) {

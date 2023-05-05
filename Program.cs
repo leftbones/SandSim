@@ -46,6 +46,8 @@ class Program {
             if (IsKeyPressed(KeyboardKey.KEY_ESCAPE)) {
                 if (Interface.MenuActive)
                     Interface.ToggleMenu();
+                else if (Interface.SettingsActive)
+                    Interface.ToggleSettings();
                 else
                     break;
             }
@@ -99,6 +101,16 @@ class Program {
 
             }
 
+            if (IsKeyPressed(KeyboardKey.KEY_F10)) {
+                Settings.HideSpawners = !Settings.HideSpawners;
+                Console.WriteLine("[SYSTEM] Spawner hiding set to " + Settings.HideSpawners.ToString().ToUpper());
+            }
+
+            if (IsKeyPressed(KeyboardKey.KEY_F11)) {
+                Settings.HideRemovers = !Settings.HideRemovers;
+                Console.WriteLine("[SYSTEM] Remover hiding set to " + Settings.HideRemovers.ToString().ToUpper());
+            }
+
             if (IsKeyPressed(KeyboardKey.KEY_SPACE))
                 Matrix.Active = !Matrix.Active;
 
@@ -135,30 +147,37 @@ class Program {
 
             foreach (Element e in Matrix.Elements) {
                 if (e.GetType() != typeof(Air)) {
+                    e.AlreadyStepped = false;
+
+                    // Elements with "DrawWhenSelected" enabled are only drawn if currently selected (duh)
+                    if (e.DrawWhenSelected && e.ToString() != Interface.DrawingTools.BrushElement) {
+                        if (e.GetType() == typeof(Spawner) && Settings.HideSpawners) continue;
+                        if (e.GetType() == typeof(Remover) && Settings.HideRemovers) continue;
+                    }
+
                     Color c = e.Color;
 
                     // Inactive Overlay
-                    // if (e.Inactive) {
-                    //     c = new Color(
-                    //         Math.Min(e.Color.r + 50, 255),
-                    //         Math.Max(e.Color.g - 50, 0),
-                    //         Math.Max(e.Color.b - 50, 0),
-                    //         e.Color.a
-                    //     );
-                    // }
+                    if (Settings.DebugOverlayInactive && e.Inactive) {
+                        c = new Color(
+                            Math.Min(e.Color.r + 100, 255),
+                            Math.Max(e.Color.g - 50, 0),
+                            Math.Max(e.Color.b - 50, 0),
+                            e.Color.a
+                        );
+                    }
 
                     // Settled Overlay
-                    // if (e.Settled) {
-                    //     c = new Color(
-                    //         Math.Max(e.Color.r - 50, 0),
-                    //         Math.Max(e.Color.g - 50, 0),
-                    //         Math.Min(e.Color.b + 50, 255),
-                    //         e.Color.a
-                    //     );
-                    // }
+                    if (Settings.DebugOverlaySettled && e.Settled) {
+                        c = new Color(
+                            Math.Max(e.Color.r - 50, 0),
+                            Math.Max(e.Color.g - 50, 0),
+                            Math.Min(e.Color.b + 100, 255),
+                            e.Color.a
+                        );
+                    }
 
                     ImageDrawPixel(ref BufferImage, e.Position.X, e.Position.Y, c);
-                    e.AlreadyStepped = false;
                 }
             }
 

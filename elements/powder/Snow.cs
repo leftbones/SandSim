@@ -7,6 +7,7 @@ class Snow : Powder {
     public Snow(Vector2i position) : base(position) {
         Friction = 0.6f;
         Drift = 0.3f;
+        Dissolvable = 100;
         BaseColor = new Color(255, 255, 255, 255);
         ModifyColor();
     }

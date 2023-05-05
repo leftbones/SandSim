@@ -21,6 +21,8 @@ abstract class Element {
     public float Health { get; set; } = 1;                  // Current health of the element, hitting 0 triggers the Expire method (Defaults: Solid - 50, Liquid/Powder - 10, Gas - 1)
     public bool AlreadyStepped { get; set; } = false;       // If the element has already run it's step method once in the current update loop
     public bool Inactive { get; set; } = false;             // If the element is able to step and act (on others)
+    public int TicksElectrified { get; set; } = 0;          // How many ticks the element has been electrified
+    public int ElectrifiedCooldown { get; set; } = 0;       // How many ticks since the element was electrified
 
     ////
     // Moveability
@@ -42,21 +44,29 @@ abstract class Element {
 
     ////
     // Interaction
-    public bool ForceAct { get; set; } = false;                                         // If the element should act on its neighbors (this step) regardless of if it is settled or not
-    public List<Vector2i> ActDirections { get; set; } = Direction.ShuffledCardinal;     // The directions in which this element interacts with neighboring elements
     public float CorrosionResistance { get; set; } = 0.0f;                              // How resistant the element is to corrosion (rust/acid/etc)
+    public int Dissolvable { get; set; } = 0;                                      // If the element will dissolve in water
+    public int ConductElectricity { get; set; } = 0;                               // If the element conducts electricity
+    public int ConductHeat { get; set; } = 0;                                      // If the element conducts heat
+    public List<Vector2i> ActDirections { get; set; } = Direction.ShuffledCardinal;     // The directions in which this element interacts with neighboring elements
+    public bool ForceAct { get; set; } = false;                                         // If the element should act on its neighbors (this step) regardless of if it is settled or not
 
     ////
     // Status
     public bool OnFire { get; set; } = false;                       // If the element is currently on fire or not
+    public bool Electrified { get; set; } = false;                  // If the element is currently conducting electricity
     public bool Shimmer { get; set; } = false;                      // If the element is currently shimmering
 
     ////
     // Coloring
     public Color Color { get; set; } = Color.WHITE;                 // Current color of the element (BaseColor +/- ColorOffset)
-    public Color BaseColor { get; set; }= Color.MAGENTA;            // Base color of the element before any offset is applied
+    public Color BaseColor { get; set; } = Color.MAGENTA;            // Base color of the element before any offset is applied
     public int ColorOffset { get; set; } = 25;                      // How far the BaseColor should be offset
     public bool NoFireColor { get; set; } = false;                  // If the element should not have it's color affected by the 'OnFire' flag
+
+    ////
+    // Other
+    public bool DrawWhenSelected { get; set; } = false;         // If true, only draw the element when it is the currently selected element
 
 
     public Element(Vector2i position) {
@@ -73,11 +83,29 @@ abstract class Element {
 
         if (OnFire) {
             Inactive = false;
+            Settled = false;
             Health -= 1.0f * BurnDamageModifier;
             if (!NoFireColor) ModifyColor();
         }
 
-        // Act on neighbors if not inactive, not settled (Liquid/Powder), Solid, or ForceAct is set
+        if (ElectrifiedCooldown > 0)
+            ElectrifiedCooldown--;
+
+        if (Electrified) {
+            Inactive = false;
+            Settled = false;
+            ModifyColor();
+
+            TicksElectrified++;
+            if (TicksElectrified == 20) {
+                Electrified = false;
+                TicksElectrified = 0;
+                ElectrifiedCooldown = 20;
+                ModifyColor();
+            }
+        }
+
+        // Act on neighbors if not inactive, not settled (Liquid/Powder), is Solid, or ForceAct is set
         if (!Inactive && (!Settled || Type == ElementType.Solid) || ForceAct) {
             matrix.WakeChunk(this);
             ActOnNeighbors(matrix);
@@ -92,10 +120,8 @@ abstract class Element {
 
     // Attempt to unsettle a neighboring element (called by ActOnNeighbors)
     public virtual void UnsettleOther(Element other) {
-        if (Friction == 1.0f || RNG.Roll(Friction))
-            Settled = false;
-
-        if (other.Friction == 1.0f || RNG.Roll(other.Friction))
+        // If this element is not a solid, the other element is a liquid, or the other element is a powder and fails a friction roll for the other element, unsettle it
+        if (Type != ElementType.Solid && (other.Type == ElementType.Liquid || (other.Type == ElementType.Powder && !RNG.Roll(other.Friction))))
             other.Settled = false;
     }
 
@@ -114,13 +140,22 @@ abstract class Element {
                 ActOnOther(matrix, e);
                 e.Inactive = false;
 
+                // Electricity
+                if (Electrified) {
+                    // Spread to conductive neighbors
+                    if (!e.Electrified && e.ElectrifiedCooldown == 0 && RNG.Roll(e.ConductElectricity))
+                        e.Electrified = true;
+
+                    // Ignite flammable neighbors
+                    if (RNG.Roll(e.Flammability))
+                        e.OnFire = true;
+                }
+
                 // Temperature transference
                 if (HeatFactor > 0.0 || OnFire) {
                     // Attempt to spread fire
-                    if (OnFire && e.Flammability > 0.0f) {
-                        if (RNG.Roll(e.Flammability))
-                            e.OnFire = true;
-                    }
+                    if (OnFire && RNG.Roll(e.Flammability))
+                        e.OnFire = true;
 
                     float heat_power = HeatFactor * (RNG.Range(0, 15) * 1.0f);
                     heat_power = OnFire ? Math.Max(heat_power, 1.0f) : heat_power;
@@ -169,6 +204,11 @@ abstract class Element {
         matrix.Set(Position, new Air(Position));
     }
 
+    // Triggered when the element is dissolved
+    public virtual void Dissolve(Matrix matrix) {
+        matrix.Set(Position, new Air(Position));
+    }
+
     // Remove OnFire status and return the element to it's base color
     public virtual void ExtinguishFire() {
         OnFire = false;
@@ -179,6 +219,11 @@ abstract class Element {
     public void ModifyColor() {
         if (OnFire) {
             Color = Effect.GetFireColor();
+            return;
+        }
+
+        if (Electrified) {
+            Color = new Color(255, 255, 0, 255);
             return;
         }
 

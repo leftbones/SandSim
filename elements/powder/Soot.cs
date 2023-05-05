@@ -9,20 +9,26 @@ class Soot : Powder {
         Friction = 0.01f;
         Drift = 0.1f;
         Flammability = 0.1f;
+        Dissolvable = 100;
         BaseColor = new Color(93, 92, 94, 255);
         ModifyColor();
     }
 
     public override void Step(Matrix matrix) {
+        base.Step(matrix);
+
         // Chance to drift horizontally when in the air
-        if (RNG.Roll(Drift) && matrix.IsEmpty(Position + Direction.Down)) {
-            foreach (Vector2i MoveDir in Direction.ShuffledHorizontal) {
-                if (matrix.SwapIfEmpty(Position, Position + MoveDir))
-                    return;
+        if (!Settled) {
+            if (RNG.Roll(Drift) && matrix.IsEmpty(Position + Direction.Down)) {
+                foreach (Vector2i MoveDir in Direction.ShuffledHorizontal) {
+                    if (matrix.SwapIfEmpty(Position, Position + MoveDir))
+                        return;
+                }
             }
         }
 
-        base.Step(matrix);
+        if (matrix.GetNeighbors(Position).Any(n => n.GetType() == typeof(Water) || n.GetType() == typeof(Saltwater)))
+            Settled = false;
     }
 
     public override void HeatReaction(Matrix matrix) {

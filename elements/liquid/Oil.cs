@@ -6,8 +6,9 @@ namespace SharpSand;
 class Oil : Liquid {
     public Oil(Vector2i position) : base(position) {
         Flammability = 0.04f;
+        BurnDamageModifier = 0.01f;
         Spread = 7.5f;
-        Density = 101.0f;
+        Density = 99.0f;
         ForceAct = true;
         ColorOffset = 0;
         BaseColor = new Color(239, 71, 111, 255);

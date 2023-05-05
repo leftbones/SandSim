@@ -1,71 +1,75 @@
-# SharpSand Notes
+# TODO
 
-## Priority List
-* Work out a way to allow settled elements to still process and react to temp changes without attempting movement
-* Change "Flammable" bool to "Flammability" float modifier to be used when rolling to spread fire between elements
-* Clean up directory structure! Holy shit this is a MESS.
-* Add some sort of "Game" or "Simulation" class to control Matrix, DrawingTools, Theme, etc. all in one place.
+## Urgent
+- Clean up the file structure! Holy hell, it's awful.
+- Have elements store their string name to avoid having to call `GetType()` and `typeof()` all over the place (probably a massive drain on performance)
+- Refactor the base `Step` method for gases, it's messy and could probably be optimized much better.
+
+## Less Urgent
+- Rather than calling "Utility.OffsetColor" every time an offset color is needed, it could be called by the Atlas during the setup a few times and stored for each element, that way each element could have a number of preset offset colors to pick from.
+- Refactor the temperature system (again) for more realistic temperature transference. Example: Water is warmer than Ice, so while Ice cools water, Water should also heat Ice slightly. Then I need to find a good balance so that a little water would be frozen, but a lot of water might melt the ice.
+
+## Eventually
+- Implement Electricity and Electricity Conductivity!
+- Implement Heat Conductivity after refactoring the temperature system.
+- Refactor the base `Step` method for liquids with density in mind, it works fine but I'm sure it could be better.
+
+## Maybe
+- Right now, `Special` type elements can be of any type, but I'm finding that they're mostly solids. Should special be made into it's own type?
 
 
-## Eventually List
-* Gasses are currently unable to become settled because there are too many factors that determine if they should unsettle, this might not be a problem at all
-* Work out a way to transfer temperature between elements
-  * HEAT SOURCE elements give off heat without losing heat (Fire applies heat to Plant)
-  * HEATED elements transfer their heat to others (Iron heated by Fire transfers heat to Water)
-  * Same applies to cooling (Water touching Iron heated by Fire cools the Iron)
-* The RNG methods I'm using are all over the place, I should probably commit to just using RNG.Roll and remove all instances of RNG.Chance (RNG.Odds is okay for specific odds)
-* Might be a good idea to replace all the instances where I create a new Vector2 list for movement directions with a List<Vector2> property on element that I can just overwrite, to save from having to create new lists every step
-* Separate Density into different properties for Liquid and Gas so they can't interact in any way
-
-
-## Known Bugs
+# Known Bugs
+* The drawing tools and brush indicator don't line up properly if the scale is set to anything other than 4
 * The brush indicator sometimes fails to align to the grid properly and is off by half a cell or so, first noticed after changing from Vector2 to Vector2i
 * Liquid settling is still kind of buggy, good example is lava dropped onto a pool of acid just settles on top of the acid instead of being corroded
 
 
-## Density Explained
-"Density" is a scientific term that I'm using in a completely wrong way to determine how liquids and gasses interact with other liquids and gasses.
-If a falling liquid meets another liquid with a lower density, it will displace that liquid. The same principle applies to gasses.
+# Simplified Element Properties
+- Temperature (Default internal temperature of the element when created)
+- Hardness (Replaces CorrosionResistance, could maybe be used for explosion resistance?)
+- Diffusion (How much horizontal "wiggle" the element will have while moving)
+- Weight (Replaces Density, just a much better name)
+- Gravity (How quickly the element moves up or down, positive or negative, solids would have 0)
+- Flammable (0 is inflammable, anything higher increases flammability)
+- Dissolvable (0 will not dissolve, anything higher increases rate of dissolving)
+- Explosive (Boolean, if the element should explode when set on fire)
+- HeatConductivity (0 is none, anything higher increases conductivity)
+- ElectricConductivity (0 is none, anything higher increases conductivity)
 
-Air is the baseline for gasses with a density of zero. Water is the baseline for liquids with a density of 100.
-
-### Liquid Density (Ascending)
-* Oil
-* Water
-* Salt Water
-* Lava
-* Molten Glass
-* Slime
-
-### Gas Density (Ascending)
-* Fire
-* Methane
-* Air
-* Steam
-* Smoke
+Note: Properties like `Flammable` and `HeatConductivity` will probably be checked with `RNG.Roll()`, which takes a float, but maybe I should set the properties to be integers for easier understanding and comparison to other elements. Example: Wood's `Flammable` is set to 5, but when rolled, could be multiplied by 0.001 to become 0.005. Just a thought, because 5 is easier to look at and remember than 0.005 is.
 
 
-## Temperature System
-Elements have an ActiveTemp and an IdleTemp (default is 50.0)
-* ActiveTemp is the current temperature of the element. When no outside forces are influencing temperature, this will attempt to regulate back to IdleTemp.
-* IdleTemp is the base temperature of the element when no other elements are applying heating or cooling to it.
+# New Elements
+- Solid
+  * Wire - If connected with two ends of Copper, electricity can safely pass from one to the other
+  * Vine - Grows randomly when painted, unlike Plant which requires Water to grow
 
-Example: Water comes in contact with Lava
+- Liquid
+  * Gas - Flammable, burns for a long time, creates mini-explosions when burning out
+  * Mud - Made when Dirt contacts Water, dries into Dirt
+  * Molten Plastic - Created when Plastic is heated, becomes Plastic when cooled
 
-* Water is processed
-  * Water has a CoolFactor of 0.5, Lava's temperature is reduced from 50.0 to 49.5
-  * Lava has a HeatFactor of 10.0, Water's temperature is increased to 60.0 from 50.0
-  * Water attempts to reach IdleTemp, decreases from 60.0 to 59.5
-* Lava is processed
-  * Lava has a HeatFactor of 10.0, Water's temperature is increased to 69.0 from 59.0
-  * Water has a CoolFactor of 0.5, Lava's temperature is reduced from 49.5 to 49.0
-  * Lava attempts to reach IdleTemp, increases from 49.0 to 49.5
+- Gas
+  * Hydrogen - Extremely flammable, creates large explosions
+  * Blue Fire - Behaves exactly like Fire, but applies cooling instead of heating
 
-Water's idle temperature regulation can't compete with Lava's HeatFactor, once Water's ActiveTemp reaches 100.0, Water becomes Steam
-If Water were continuously applied to Lava, dropping it's ActiveTemp to 0.0, Lava would become Stone
+- Powder
+  * Dust - Lightweight powder created by various reactions, mildly flammable and burns extremely fast
+  * Concrete Powder - Becomes Concrete when mixed with Water
+
+- Special
+  * Separator - Elements that touch it can be split into their component elements, if possible (Example: Water -> Hydrogen + Air)
+  * Converter - Converts any element that touches it into the first element applied to it
+  * Katamari - Absorbs any element that touches it and grows larger
 
 
-## Weird Things
+# New Objects
+* Switch - Clickable toggle switch, when activated, it will allow electricity to pass through until deactivated
+* Button - Clickable momentary switch, when activated, it will allow electricity to pass through for a few ticks
+* Bouncy Ball - A simple ball that bounces on solids and floats on liquids
+
+
+# Weird Things
 This code made the brush work like an actual paint brush for some reason (see: https://streamable.com/soqdsg)
 
 public void PaintLine(Matrix matrix, Vector2i a, Vector2i b, string element_name) {

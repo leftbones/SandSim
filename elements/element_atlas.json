@@ -37,9 +37,15 @@
         "ElementType" : "Solid"
     },
 
-    "Life" : {
-        "DisplayName" : "Life",
-        "Description" : "It's alive! Kinda!",
+    "Copper" : {
+        "DisplayName" : "Copper",
+        "Description" : "Good at conducting heat and electricity, and it'll never rust!",
+        "ElementType" : "Solid"
+    },
+
+    "Steel" : {
+        "DisplayName" : "Steel",
+        "Description" : "Great at conducting heat, but it doesn't like water.",
         "ElementType" : "Solid"
     },
 
@@ -50,6 +56,12 @@
     "Water" : {
         "DisplayName" : "Water",
         "Description" : "Ice that isn't cold enough.",
+        "ElementType" : "Liquid"
+    },
+
+    "Saltwater" : {
+        "DisplayName" : "Saltwater",
+        "Description" : "Water with a side of salt.",
         "ElementType" : "Liquid"
     },
 
@@ -78,6 +90,12 @@
     "Fire" : {
         "DisplayName" : "Fire",
         "Description" : "Hot!",
+        "ElementType" : "Gas"
+    },
+
+    "BlueFire" : {
+        "DisplayName" : "Blue Fire",
+        "Description" : "Cold!",
         "ElementType" : "Gas"
     },
 
@@ -145,9 +163,49 @@
         "ElementType" : "Powder"
     },
 
+    "Rust" : {
+        "DisplayName" : "Rust",
+        "Description" : "Leftover oxidized metals.",
+        "ElementType" : "Powder"
+    },
+
     "Nanobots" : {
         "DisplayName" : "Nanobots",
         "Description" : "Tiny robots programmed to consume and multiply.",
         "ElementType" : "Powder"
+    },
+
+
+////
+// Special
+
+    "Spawner" : {
+        "DisplayName" : "Spawner",
+        "Description" : "Creates copies of whatever element touches it first",
+        "ElementType" : "Solid"
+    },
+
+    "Remover" : {
+        "DisplayName" : "Remover",
+        "Description" : "Why do I destroy everything I touch?!",
+        "ElementType" : "Solid"
+    },
+
+    "Battery" : {
+        "DisplayName" : "Battery",
+        "Description" : "Generates infinite electricity.",
+        "ElementType" : "Solid"
+    },
+
+    "Life" : {
+        "DisplayName" : "Life",
+        "Description" : "It's alive! Kinda!",
+        "ElementType" : "Solid"
+    },
+
+    "Chaos" : {
+        "DisplayName" : "Chaos",
+        "Description" : "It could be anything... It could even be Chaos!",
+        "ElementType" : "Solid"
     }
 }

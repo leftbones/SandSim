@@ -8,6 +8,10 @@ static class RNG {
         return Random.NextDouble() <= n;
     }
 
+    public static bool Roll(int n) {
+        return Random.NextDouble() <= n * 0.001;
+    }
+
     // Return true or false based on 1:n odds
     public static bool Odds(int n) {
         return Range(1, n) == 1;

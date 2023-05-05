@@ -187,7 +187,6 @@ class Matrix {
             Elements[position.X, position.Y] = element;
             element.Position = position;
             element.LastDirection = Direction.GetMovementDirection(element.LastPosition, element.Position);
-
             WakeChunk(element);
             return true;
         }
@@ -341,6 +340,16 @@ class Matrix {
             Element e1 = Get(pos1);
             Element e2 = Get(pos2);
             return e1.Density > e2.Density;
+        }
+        return false;
+    }
+
+    // Check if a position contains a more dense element
+    public bool IsMoreDense(Vector2i pos1, Vector2i pos2) {
+        if (InBounds(pos2)) {
+            Element e1 = Get(pos1);
+            Element e2 = Get(pos2);
+            return e1.Density < e2.Density;
         }
         return false;
     }

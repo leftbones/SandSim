@@ -3,15 +3,16 @@ using Raylib_cs;
 
 namespace SharpSand;
 
-class Water : Liquid {
-    private int RustChance = 5;
+class Saltwater : Liquid {
+    private int RustChance = 10;
 
-    public Water(Vector2i position) : base(position) {
+    public Saltwater(Vector2i position) : base(position) {
+        Density = 101.0f;
         Spread = 10.0f;
         CoolFactor = 0.5f;
-        ConductElectricity = 100;
+        ConductElectricity = 750;
         ColorOffset = 0;
-        BaseColor = new Color(1, 151, 244, 255);
+        BaseColor = new Color(0, 120, 194, 255);
         ModifyColor();
     }
 
@@ -34,7 +35,7 @@ class Water : Liquid {
         if (other.OnFire)
             other.ExtinguishFire();
 
-        if (other.Dissolvable > 0 && RNG.Roll(other.Dissolvable)) {
+        if (other.Dissolvable > 0 && RNG.Roll(other.Dissolvable + (other.Dissolvable / 2))) {
             other.Dissolve(matrix);
             return;
         }

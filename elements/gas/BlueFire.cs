@@ -2,15 +2,15 @@ using System.Numerics; using Raylib_cs;
 
 namespace SharpSand;
 
-class Fire : Gas {
-    public Fire(Vector2i position) : base(position) {
+class BlueFire : Gas {
+    public BlueFire(Vector2i position) : base(position) {
         Lifetime = 20;
         Density = -1.0f;
         OnFire = true;
         BurnDamageModifier = 0.0f;
-        HeatFactor = 5.0f;
+        CoolFactor = 50.0f;
         NoFireColor = true;
-        BaseColor = Effect.GetFireColor();
+        BaseColor = Effect.GetBlueFireColor();
         Color = BaseColor;
     }
 

@@ -9,9 +9,19 @@ public static class Effect {
         new Color(255, 117, 56, 255),
         new Color(255, 206, 92, 255)
     };
+    
+    public static readonly Color[] BlueFireColors = new Color[] {
+        new Color(1, 151, 244, 255),
+        new Color(4, 174, 173, 255),
+        new Color(240, 246, 240, 255)
+    };
 
     public static Color GetFireColor() {
         return FireColors[RNG.Random.Next(0, FireColors.Length)];
+    }
+
+    public static Color GetBlueFireColor() {
+        return BlueFireColors[RNG.Random.Next(0, BlueFireColors.Length)];
     }
 
     public static Color GetNanobotsColor() {

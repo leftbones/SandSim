@@ -30,12 +30,12 @@ class DrawingTools {
     public Vector2i MousePosB { get; set; }
 
 
-    public DrawingTools(Vector2i screen_size, Vector2i matrix_size, Theme theme, List<Texture2D> element_textures) {
+    public DrawingTools(Vector2i screen_size, Vector2i matrix_size, int scale, Theme theme, List<Texture2D> element_textures) {
         ScreenSize = screen_size;
         MatrixSize = matrix_size;
         Theme = theme;
         ElementTextures = element_textures;
-        Scale = (int)(ScreenSize.X / MatrixSize.X);
+        Scale = scale;
 
         // Generate element preview textures
         for (int i = 0; i < Atlas.Entries.Count; i++) {
@@ -96,9 +96,16 @@ class DrawingTools {
                 continue;
             }
 
-            var NewElement = (Element)Activator.CreateInstance(t, Point)!;
-            matrix.Set(Point, NewElement);
-            Cache.Add(Point);
+            if (!erase && BrushElement == "SharpSand.Spawner") {
+                var NewElement = (Spawner)Activator.CreateInstance(t, Point)!;
+                NewElement.SpawnChance = (float)BrushDensityModifier * 0.05f;
+                matrix.Set(Point, NewElement);
+                Cache.Add(Point);
+            } else {
+                var NewElement = (Element)Activator.CreateInstance(t, Point)!;
+                matrix.Set(Point, NewElement);
+                Cache.Add(Point);
+            }
         }
     }
 
