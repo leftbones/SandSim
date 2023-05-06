@@ -26,9 +26,6 @@ class Soot : Powder {
                 }
             }
         }
-
-        if (matrix.GetNeighbors(Position).Any(n => n.GetType() == typeof(Water) || n.GetType() == typeof(Saltwater)))
-            Settled = false;
     }
 
     public override void HeatReaction(Matrix matrix) {

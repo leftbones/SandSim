@@ -11,12 +11,6 @@ class Salt : Powder {
         ModifyColor();
     }
 
-    public override void Step(Matrix matrix) {
-        base.Step(matrix);
-        if (matrix.GetNeighbors(Position).Any(n => n.GetType() == typeof(Water) || n.GetType() == typeof(Saltwater)))
-            Settled = false;
-    }
-
     public override void Dissolve(Matrix matrix) {
         matrix.Set(Position, new Saltwater(Position));
     }

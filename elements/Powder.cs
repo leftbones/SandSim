@@ -16,6 +16,8 @@ abstract class Powder : Element {
         if (Settled) {
             if (matrix.IsEmpty(Position + Direction.Down))
                 Settled = false;
+            else if (matrix.GetNeighbors(Position).Any(n => n.GetType() == typeof(Water) || n.GetType() == typeof(Saltwater)))
+                Settled = false;
             else
                 return;
         }

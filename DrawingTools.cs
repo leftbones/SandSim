@@ -124,7 +124,8 @@ class DrawingTools {
     // Draw the generated preview texture for the current element
     public void DrawBrushElement() {
         DrawTexture(ElementTextures[ElementIndex], 5, 5, Color.WHITE);
-        string Text = BrushElement.Split(".")[1];
+        // string Text = BrushElement.Split(".")[1];
+        string Text = Atlas.Entries.ElementAt(ElementIndex).Value.DisplayName;
 
         if (PaintOver)
             Text += " [+]";

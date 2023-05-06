@@ -169,6 +169,12 @@
         "ElementType" : "Powder"
     },
 
+    "ConcreteMix" : {
+        "DisplayName" : "Concrete Mix",
+        "Description" : "Just add water!",
+        "ElementType" : "Powder"
+    },
+
     "Nanobots" : {
         "DisplayName" : "Nanobots",
         "Description" : "Tiny robots programmed to consume and multiply.",

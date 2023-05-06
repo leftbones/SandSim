@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Newtonsoft.Json;
 using Raylib_cs;
 using static Raylib_cs.Raylib;
 using static Raylib_cs.TraceLogLevel;
@@ -23,15 +24,60 @@ class Program {
 
         ////
         // Setup
+
+        // Load Settings
+        var Settings = new Settings();
+        try {
+            Settings = JsonConvert.DeserializeObject<Settings>(File.ReadAllText("settings.json"))!;
+            Console.WriteLine("[SYSTEM] Settings restored");
+        } catch {
+            Console.WriteLine("[ERROR] No settings.json found, default settings restored");
+        }
+
+        // Autoload Matrix
         var Matrix = new Matrix(ScreenSize, Scale);
+        if (Settings.LoadOnStart) {
+            try {
+                string input = File.ReadAllText("autosave.sav");
+                int x = 0, y = 0;
+                foreach (var row in input.Split('\n')) {
+                    y = 0;
+                    foreach (var col in row.Trim().Split(" ")) {
+                        Vector2i Pos = new Vector2i(x, y);
+                        Element NewElement;
+
+                        if (col.Trim() == "") {
+                            continue;
+                        } else if (col.Trim() == "-1") {
+                            NewElement = new Air(Pos);
+                        } else {
+                            Type t = Type.GetType("SharpSand." + Atlas.GetNameFromID(int.Parse(col.Trim())))!;
+                            NewElement = (Element)Activator.CreateInstance(t, Pos)!;
+                        }
+
+                        Matrix.Set(Pos, NewElement);
+                        y++;
+                    }
+                    x++;
+                }
+                Console.WriteLine("[SYSTEM] Auto load successful");
+            } catch {
+                Console.WriteLine("[ERROR] No autosave.sav found, new matrix created");
+            }
+        }
+
+        // Apply matrix settings
+        Matrix.DestroyOutOfBounds = Settings.DestroyOutOfBounds;
+
         Console.WriteLine("[SYSTEM] Matrix initialized");
 
+        // Matrix Buffer + Texture
         Image BufferImage = GenImageColor(Matrix.Size.X, Matrix.Size.Y, Color.BLACK);
         Texture2D BufferTexture = LoadTextureFromImage(BufferImage);
 
+        // Theme + Interface
         var Theme = new Theme();
         var Interface = new Interface(ScreenSize, Matrix.Size, Scale, Theme);
-        var Settings = new Settings();
 
         Console.WriteLine("[SYSTEM] Init complete");
 
@@ -65,16 +111,16 @@ class Program {
                 Settings.CycleSimulationSpeed();
 
             if (IsKeyPressed(KeyboardKey.KEY_F3)) {
-                Matrix.UseChunks = !Matrix.UseChunks;
-                Console.WriteLine("[SYSTEM] Chunk processing set to " + Matrix.UseChunks.ToString().ToUpper());
-                foreach (Chunk C in Matrix.Chunks)
-                    C.Awake = false;
+                Settings.SaveOnClose = !Settings.SaveOnClose;
+                Settings.LoadOnStart = !Settings.LoadOnStart;
+                Console.WriteLine("[SYSTEM] Auto save/load set to " + Settings.SaveOnClose.ToString().ToUpper());
             }
 
             if (IsKeyPressed(KeyboardKey.KEY_F4)) {
+                Settings.DestroyOutOfBounds = !Settings.DestroyOutOfBounds;
                 Matrix.DestroyOutOfBounds = !Matrix.DestroyOutOfBounds;
                 Matrix.UnsettleAll();
-                Console.WriteLine("[SYSTEM] Destroy out of bounds set to " + Matrix.DestroyOutOfBounds.ToString().ToUpper());
+                Console.WriteLine("[SYSTEM] Destroy out of bounds set to " + Settings.DestroyOutOfBounds.ToString().ToUpper());
             }
 
             if (IsKeyPressed(KeyboardKey.KEY_F5)) {
@@ -102,13 +148,16 @@ class Program {
             }
 
             if (IsKeyPressed(KeyboardKey.KEY_F10)) {
-                Settings.HideSpawners = !Settings.HideSpawners;
-                Console.WriteLine("[SYSTEM] Spawner hiding set to " + Settings.HideSpawners.ToString().ToUpper());
+                Settings.HideSpawnerRemover = !Settings.HideSpawnerRemover;
+                Console.WriteLine("[SYSTEM] Spawner/Remover hiding set to " + Settings.HideSpawnerRemover.ToString().ToUpper());
             }
 
             if (IsKeyPressed(KeyboardKey.KEY_F11)) {
-                Settings.HideRemovers = !Settings.HideRemovers;
-                Console.WriteLine("[SYSTEM] Remover hiding set to " + Settings.HideRemovers.ToString().ToUpper());
+
+            }
+
+            if (IsKeyPressed(KeyboardKey.KEY_F12)) {
+
             }
 
             if (IsKeyPressed(KeyboardKey.KEY_SPACE))
@@ -151,8 +200,9 @@ class Program {
 
                     // Elements with "DrawWhenSelected" enabled are only drawn if currently selected (duh)
                     if (e.DrawWhenSelected && e.ToString() != Interface.DrawingTools.BrushElement) {
-                        if (e.GetType() == typeof(Spawner) && Settings.HideSpawners) continue;
-                        if (e.GetType() == typeof(Remover) && Settings.HideRemovers) continue;
+                        Type E_Type = e.GetType();
+                        if (Settings.HideSpawnerRemover && (E_Type == typeof(Spawner) || E_Type == typeof(Remover)))
+                            continue;
                     }
 
                     Color c = e.Color;
@@ -221,6 +271,30 @@ class Program {
         ////
         // Exit
         CloseWindow();
+
+        // Save settings
+        string SettingsOutput = JsonConvert.SerializeObject(Settings);
+        File.WriteAllText("settings.json", SettingsOutput);
+        Console.WriteLine("[SYSTEM] Settings saved to settings.json");
+
+        // Autosave Matrix
+        if (Settings.SaveOnClose) {
+            using (var sw = new StreamWriter("autosave.sav", append: false)) {
+                int x, y;
+                for (x = 0; x < Matrix.Size.X; x++) {
+                    for (y = 0; y < Matrix.Size.Y; y++) {
+                        int ID = Atlas.GetIDFromName(Matrix.Elements[x, y].ToString()!.Split(".")[1]);
+                        sw.Write(ID + " ");
+                    }
+                    sw.Write("\n");
+                }
+
+                sw.Flush();
+                sw.Close();
+            }
+            Console.WriteLine("[SYSTEM] Game saved to autosave.sav");
+        }
+
         Console.WriteLine("[SYSTEM] Simulation exited successfully");
     }
 }

@@ -55,7 +55,6 @@ Note: Properties like `Flammable` and `HeatConductivity` will probably be checke
 
 - Powder
   * Dust - Lightweight powder created by various reactions, mildly flammable and burns extremely fast
-  * Concrete Powder - Becomes Concrete when mixed with Water
 
 - Special
   * Separator - Elements that touch it can be split into their component elements, if possible (Example: Water -> Hydrogen + Air)

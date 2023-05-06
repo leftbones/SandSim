@@ -15,7 +15,7 @@ class Interface {
     public bool MenuActive { get; private set; } = false;
     public Vector2i MenuPos { get; private set; }
     public Vector2i MenuTargetPos { get; private set; }
-    public Vector2i MenuSize { get { return new Vector2i(200, ScreenSize.Y); } }
+    public Vector2i MenuSize { get { return new Vector2i(300, ScreenSize.Y); } }
     public int MenuScrollOffset { get; set; } = 0;
     public int MaxMenuItems { get { return ScreenSize.Y / 30; } }
 
@@ -39,15 +39,14 @@ class Interface {
         "",
         "[Hotkeys]",
         "<F2> Cycle simulation speed",
-        "<F3> Toggle chunk processing (experimental)",
+        "<F3> Toggle auto save/load",
         "<F4> Toggle world borders",
         "<F5> Reset world",
         "<F6> Toggle weather",
         "<F7> Cycle weather element",
         "<F8> Toggle element name display",
         "<F9> Toggle chunk border display",
-        "<F10> Toggle Spawner hiding",
-        "<F11> Toggle Remover hiding"
+        "<F10> Toggle Spawner/Remover hiding",
     };
 
     private List<Texture2D> ElementTextures = new List<Texture2D>();

@@ -9,6 +9,10 @@ class Settings {
     public bool ShowElementName { get; set; } = false;
     public bool DrawChunkBorders { get; set; } = false;
 
+    // Matrix Settings
+    public bool DestroyOutOfBounds { get; set; } = true;
+    public bool UseChunkProcessing { get; set; } = false;
+
     // Weather Effects
     public bool WeatherEnabled { get; set; } = false;
     public int WeatherStrength { get; set; } = 1;
@@ -22,8 +26,11 @@ class Settings {
     private int[] SpeedSettings = new int[] {100, 200, 9999};
 
     // Element Hiding
-    public bool HideSpawners { get; set; } = false;
-    public bool HideRemovers { get; set; } = false;
+    public bool HideSpawnerRemover { get; set; } = false;
+
+    // Save Game
+    public bool SaveOnClose { get; set; } = true;
+    public bool LoadOnStart { get; set; } = true;
 
     // Debug Overlays
     public bool DebugOverlayInactive { get; set; } = false;

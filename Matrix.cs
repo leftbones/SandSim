@@ -1,5 +1,4 @@
-using System.Numerics;
-using Raylib_cs;
+using Newtonsoft.Json;
 
 namespace SharpSand;
 
@@ -418,15 +417,5 @@ class Matrix {
         foreach (Element e in Elements) {
             e.Settled = false;
         }
-    }
-
-    // Save the matrix to a file
-    public void Save() {
-
-    }
-
-    // Load a file to the matrix
-    public void Load() {
-
     }
 }
