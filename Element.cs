@@ -34,20 +34,19 @@ abstract class Element {
 
     ////
     // Temperature
-    public float IdleTemp { get; set; } = 50.0f;            // The resting temperature of the element
-    public float ActiveTemp { get; set; } = 50.0f;          // The current temperature of the element
+    public double Temperature { get; set; } = 22.0f;          // The temperature of the element
     public float HeatFactor { get; set; } = 0.0f;           // How much heating the element gives off
     public float CoolFactor { get; set; } = 0.0f;           // How much cooling the element gives off
 
     public float Flammability { get; set; } = 0.0f;         // How likely the element is to be set on fire
-    public float BurnDamageModifier { get; set; } = 1.0f;   // How susceptible the element is to damage from fire (doesn't affect flammability)
+    public float BurnDamageModifier { get; set; } = 1.0f;   // How susceptible the element is to damage from fire 
 
     ////
     // Interaction
     public float CorrosionResistance { get; set; } = 0.0f;                              // How resistant the element is to corrosion (rust/acid/etc)
     public int Dissolvable { get; set; } = 0;                                      // If the element will dissolve in water
     public int ConductElectricity { get; set; } = 0;                               // If the element conducts electricity
-    public int ConductHeat { get; set; } = 0;                                      // If the element conducts heat
+    public double ConductHeat { get; set; } = 0.0f;                                      // If the element conducts heat
     public List<Vector2i> ActDirections { get; set; } = Direction.ShuffledCardinal;     // The directions in which this element interacts with neighboring elements
     public bool ForceAct { get; set; } = false;                                         // If the element should act on its neighbors (this step) regardless of if it is settled or not
 
@@ -110,6 +109,8 @@ abstract class Element {
             matrix.WakeChunk(this);
             ActOnNeighbors(matrix);
         }
+
+        DoTempTransfer(matrix);
     }
 
     // Check surroundings and move accordingly
@@ -151,20 +152,57 @@ abstract class Element {
                         e.OnFire = true;
                 }
 
-                // Temperature transference
-                if (HeatFactor > 0.0 || OnFire) {
-                    // Attempt to spread fire
-                    if (OnFire && RNG.Roll(e.Flammability))
-                        e.OnFire = true;
+                // if (HeatFactor > 0.0 || OnFire) {
+                //     // Attempt to spread fire
+                //     if (OnFire && RNG.Roll(e.Flammability))
+                //         e.OnFire = true;
 
-                    float heat_power = HeatFactor * (RNG.Range(0, 15) * 1.0f);
-                    heat_power = OnFire ? Math.Max(heat_power, 1.0f) : heat_power;
-                    if (e_type == this_type) heat_power /= 2;
-                    e.ChangeTemp(matrix, heat_power);
-                } else if (CoolFactor > 0.0) {
-                    float cool_power = -CoolFactor * (RNG.Range(0, 15) * 0.1f);
-                    if (e_type == this_type) cool_power /= 2;
-                    e.ChangeTemp(matrix, cool_power);
+                //     float heat_power = HeatFactor * (RNG.Range(0, 15) * 1.0f);
+                //     heat_power = OnFire ? Math.Max(heat_power, 1.0f) : heat_power;
+                //     if (e_type == this_type) heat_power /= 2;
+                //     e.ChangeTemp(matrix, heat_power);
+                // } else if (CoolFactor > 0.0) {
+                //     float cool_power = -CoolFactor * (RNG.Range(0, 15) * 0.1f);
+                //     if (e_type == this_type) cool_power /= 2;
+                //     e.ChangeTemp(matrix, cool_power);
+                // }
+            }
+        }
+    }
+
+    public void DoTempTransfer(Matrix matrix) {
+        Type this_type = this.GetType();
+        foreach (Vector2i Dir in ActDirections) {
+            if (matrix.InBounds(Position + Dir)) {
+                Element e = matrix.Get(Position + Dir);
+                Type e_type = e.GetType();
+
+                if (e_type == typeof(Air))
+                    continue;
+
+                // Temperature transference
+                if (e.AlreadyStepped)
+                    continue;
+
+                double DT = Temperature - e.Temperature;
+
+                if (DT < 1.0f)
+                    continue;
+
+                double K = (e.ConductHeat > ConductHeat) ? e.ConductHeat : ConductHeat;
+                double Q = Math.Min(K * DT / 0.01, 10.0);
+
+                if (Double.IsInfinity(Q)) {
+                    Console.WriteLine(String.Format("Q is infinity! DT: {0}, K: {1}, Q: {2}, other temp: {3}", DT, K, Q, e.Temperature));
+                    matrix.Active = false;
+                }
+
+                Temperature -= Q;
+                e.Temperature += Q;
+
+                if (Double.IsNaN(Temperature)) {
+                    Console.WriteLine(String.Format("Temperature is NaN! DT: {0}, K: {1}, Q: {2}, other temp: {3}", DT, K, Q, e.Temperature));
+                    matrix.Active = false;
                 }
             }
         }
@@ -179,19 +217,19 @@ abstract class Element {
     }
 
     // Alter the elements active temperature
-    public virtual void ChangeTemp(Matrix matrix, float amount) {
-        ActiveTemp += amount;
+    // public virtual void ChangeTemp(Matrix matrix, float amount) {
+    //     ActiveTemp += amount;
 
-        if (ActiveTemp > IdleTemp) ActiveTemp -= 0.5f;
-        if (ActiveTemp < IdleTemp) ActiveTemp += 0.5f;
+    //     if (ActiveTemp > SpawnTemp) ActiveTemp -= 0.5f;
+    //     if (ActiveTemp < SpawnTemp) ActiveTemp += 0.5f;
 
-        ActiveTemp = Math.Clamp(ActiveTemp, 0.0f, 100.0f);
+    //     ActiveTemp = Math.Clamp(ActiveTemp, 0.0f, 100.0f);
 
-        if (ActiveTemp == 100.0f)
-            HeatReaction(matrix);
-        else if (ActiveTemp == 0.0f)
-            CoolReaction(matrix);
-    }
+    //     if (ActiveTemp == 100.0f)
+    //         HeatReaction(matrix);
+    //     else if (ActiveTemp == 0.0f)
+    //         CoolReaction(matrix);
+    // }
 
     // Called when temperature reaches 100.0
     public virtual void HeatReaction(Matrix matrix) { }

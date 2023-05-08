@@ -8,7 +8,9 @@ class Water : Liquid {
 
     public Water(Vector2i position) : base(position) {
         Spread = 10.0f;
+        Temperature = 20.0;
         CoolFactor = 0.5f;
+        ConductHeat = 0.11;
         ConductElectricity = 100;
         ColorOffset = 0;
         BaseColor = new Color(1, 151, 244, 255);
@@ -16,6 +18,12 @@ class Water : Liquid {
     }
 
     public override void Step(Matrix matrix) {
+        if (Temperature < 0.0f) {
+            Element NE = new Ice(Position);
+            NE.Temperature = Temperature;
+            matrix.Set(Position, NE);
+        }
+
         if (matrix.IsEmpty(Position + Direction.Up)) {
             if (RNG.Chance(75))
                 Shimmer = true;

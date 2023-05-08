@@ -11,7 +11,7 @@ class Program {
         ////
         // Init
         Console.WriteLine("[SYSTEM] Simulation initialized");
-        Vector2i ScreenSize = new Vector2i(1280, 720);
+        Vector2i ScreenSize = new Vector2i(1600, 900);
         int Scale = 4;
 
         Console.WriteLine(String.Format("[SYSTEM] Screen size is {0}x{1}, scale is {2}", ScreenSize.X, ScreenSize.Y, Scale));
@@ -153,11 +153,13 @@ class Program {
             }
 
             if (IsKeyPressed(KeyboardKey.KEY_F11)) {
-
+                Settings.DebugOverlayInactive = !Settings.DebugOverlayInactive;
+                Console.WriteLine("[DEBUG] Inactive debug overlay set to " + Settings.DebugOverlayInactive.ToString().ToUpper());
             }
 
             if (IsKeyPressed(KeyboardKey.KEY_F12)) {
-
+                Settings.DebugOverlaySettled = !Settings.DebugOverlaySettled;
+                Console.WriteLine("[DEBUG] Settled debug overlay set to " + Settings.DebugOverlaySettled.ToString().ToUpper());
             }
 
             if (IsKeyPressed(KeyboardKey.KEY_SPACE))
@@ -256,7 +258,7 @@ class Program {
                     Element e = Matrix.Get(MousePos);
                     string ElementName = e.ToString()!.Split(".")[1];
                     if (e.OnFire) ElementName += " (on fire)";
-                    ElementName += String.Format(" (Temp: {0})", e.ActiveTemp);
+                    ElementName += String.Format(" (Temp: {0})", e.Temperature);
 
                     Interface.DrawingTools.DrawTextShadow(ElementName, (MousePos * Scale) + new Vector2i(5, 5));
                 }

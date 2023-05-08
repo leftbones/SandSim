@@ -47,6 +47,8 @@ class Interface {
         "<F8> Toggle element name display",
         "<F9> Toggle chunk border display",
         "<F10> Toggle Spawner/Remover hiding",
+        "<F11> Toggle inactive element overlay (debug)",
+        "<F12> Toggle settled element overlay (debug)"
     };
 
     private List<Texture2D> ElementTextures = new List<Texture2D>();
